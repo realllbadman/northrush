@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout — {{ BUSINESS.name }}{% endblock %}
+
+{% block content %}
+<section class="checkout">
+  <div class="container">
+    <header class="listing__head reveal">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <span>Checkout</span></nav>
+        <h1>Review &amp; Request Your Order</h1>
+        <p class="listing__count">No card needed — submit your order and we'll contact you to confirm details and arrange payment.</p>
+      </div>
+    </header>
+
+    <div class="checkout__layout" id="checkout-layout">
+
+      <!-- Order form -->
+      <form class="co-form reveal" id="checkout-form" novalidate>
+        <h2>Contact</h2>
+        <div class="co-form__row">
+          <label>First name *<input type="text" name="first_name" required autocomplete="given-name"></label>
+          <label>Last name<input type="text" name="last_name" autocomplete="family-name"></label>
+        </div>
+        <div class="co-form__row">
+          <label>Phone *<input type="tel" name="phone" required autocomplete="tel"></label>
+          <label>Email<input type="email" name="email" autocomplete="email"></label>
+        </div>
+        <label>Company / Ranch (optional)<input type="text" name="company" autocomplete="organization"></label>
+
+        <h2>Delivery</h2>
+        <label>Street address<input type="text" name="address" autocomplete="street-address"></label>
+        <div class="co-form__row co-form__row--3">
+          <label>City<input type="text" name="city" autocomplete="address-level2"></label>
+          <label>State
+            <select name="state">
+              <option value="">Select…</option>
+              {% for st in US_STATES %}<option value="{{ st }}">{{ st }}</option>{% endfor %}
+            </select>
+          </label>
+          <label>ZIP<input type="text" name="zip" autocomplete="postal-code" inputmode="numeric"></label>
+        </div>
+        <div class="co-form__row">
+          <label>Country<input type="text" name="country" value="United States"></label>
+          <label>Shipping region
+            <select name="freight_region" id="freight-region">
+              {% for region, fee in FREIGHT_REGIONS %}
+              <option value="{{ region }}" data-fee="{{ fee }}">{{ region }}{% if fee > 0 %} (+${{ fee }}){% endif %}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <h2>How should we reach you?</h2>
+        <div class="co-form__row">
+          <label>Contact preference
+            <select name="contact_pref">
+              <option>Phone</option><option>Text</option><option>Email</option>
+            </select>
+          </label>
+          <label>Best time to reach you<input type="text" name="best_time" placeholder="e.g. weekday evenings"></label>
+        </div>
+        <label>Preferred payment method
+          <select name="payment_method">
+            <option>Bank Transfer</option><option>Zelle</option><option>PayPal</option><option>Other</option>
+          </select>
+        </label>
+        <label>Notes for us (delivery details, land access, questions…)
+          <textarea name="notes" rows="4"></textarea>
+        </label>
+
+        <button class="btn btn--primary btn--lg btn--block" type="submit" id="checkout-submit">Submit Order Request</button>
+        <p class="co-form__fine">By submitting you're requesting a quote/order — nothing is charged. We confirm stock, freight and total with you before any payment.</p>
+      </form>
+
+      <!-- Summary -->
+      <aside class="co-summary reveal" aria-label="Order summary">
+        <h2>Your Items</h2>
+        <div id="co-items" class="co-summary__items"></div>
+        <dl class="co-summary__totals">
+          <div><dt>Subtotal</dt><dd id="co-subtotal">$0.00</dd></div>
+          <div><dt>Shipping</dt><dd id="co-shipping">—</dd></div>
+          <div><dt>Freight</dt><dd id="co-freight">$0.00</dd></div>
+          <div class="co-summary__grand"><dt>Estimated total</dt><dd id="co-total">$0.00</dd></div>
+        </dl>
+        <p class="co-summary__note">Free domestic shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }} · otherwise flat ${{ BUSINESS.flat_shipping }}. International freight added by region.</p>
+      </aside>
+    </div>
+
+    <!-- Success state -->
+    <div class="co-success" id="co-success" hidden>
+      <div class="co-success__card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 12.5 L10.5 16 L17 8.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Order request received!</h2>
+        <p id="co-success-msg">We'll contact you shortly to confirm your order and arrange payment.</p>
+        <a class="btn btn--primary" href="/products?category=deer-blinds-stands">Keep Shopping</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

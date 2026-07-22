@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from "_card.html" import product_card %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero__grid">
+    <div class="hero__copy">
+      <span class="hero__eyebrow reveal">Northern-grade deer blinds &amp; stands</span>
+      <h1 class="reveal">Own the woods.<br>Hunt in comfort.</h1>
+      <p class="reveal">Premium ground blinds, 360° blinds and tower stands from the brands serious hunters trust — delivered to your land, anywhere in the U.S.</p>
+      <div class="hero__ctas reveal">
+        <a class="btn btn--primary btn--lg" href="/products?category=deer-blinds-stands">Shop Blinds &amp; Stands</a>
+        <a class="btn btn--outline btn--lg" href="/financing">Financing from $500 down</a>
+      </div>
+      <ul class="hero__ticks reveal">
+        <li>Free shipping over $1,500</li>
+        <li>Ships to all 50 states</li>
+        <li>Real support, real hunters</li>
+      </ul>
+    </div>
+    <div class="hero__gallery" data-parallax>
+      {% for b in hero_blinds %}
+      <a class="hero__tile reveal {% if loop.first %}hero__tile--main{% endif %}" href="/products/{{ b.slug }}">
+        <img src="{{ img_url(b.image) }}" alt="{{ b.name }}"
+             onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
+        <span class="hero__tile-label">{{ b.name }} · ${{ '{:,.0f}'.format(b.price) }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORY SLIDER -->
+<section class="chip-slider-band">
+  <div class="container">
+    <div class="chip-slider" role="navigation" aria-label="Quick categories">
+      {% for label, href in SLIDER_CHIPS %}
+      <a class="chip-slider__chip {% if loop.index <= 5 %}chip-slider__chip--blind{% endif %}" href="{{ href }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- BEST SELLERS -->
+<section class="section">
+  <div class="container">
+    <div class="section__head reveal">
+      <div>
+        <span class="section__eyebrow">Hunter favorites</span>
+        <h2>Best-Selling Blinds</h2>
+      </div>
+      <a class="btn btn--ghost" href="/products?category=deer-blinds-stands">View all blinds →</a>
+    </div>
+    <div class="grid grid--cards stagger">
+      {% for p in featured %}
+      {{ product_card(p) }}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORY TILES -->
+<section class="section section--tinted">
+  <div class="container">
+    <div class="section__head reveal">
+      <div>
+        <span class="section__eyebrow">Browse the shop</span>
+        <h2>Everything for the Hunt</h2>
+      </div>
+    </div>
+    <div class="tiles stagger">
+      <a class="tile tile--hero reveal" href="/products?category=deer-blinds-stands">
+        <div class="tile__body">
+          <h3>Deer Blinds &amp; Stands</h3>
+          <p>{{ category_counts['deer-blinds-stands'] }} models — ground blinds to full tower packages</p>
+          <span class="tile__cta">Shop the flagship category →</span>
+        </div>
+        {% if spotlight %}<img src="{{ img_url(spotlight.image) }}" alt="" aria-hidden="true">{% endif %}
+      </a>
+      {% for slug, label in CATEGORY_LABELS.items() if slug != 'deer-blinds-stands' %}
+      <a class="tile reveal" href="/products?category={{ slug }}">
+        <div class="tile__body">
+          <h3>{{ label }}</h3>
+          <p>{{ category_counts[slug] }} products</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SPOTLIGHT -->
+{% if spotlight %}
+<section class="spotlight">
+  <div class="container spotlight__grid">
+    <div class="spotlight__imgbox reveal" data-parallax>
+      <img src="{{ img_url(spotlight.image) }}" alt="{{ spotlight.name }}"
+           onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
+    </div>
+    <div class="spotlight__copy">
+      <span class="section__eyebrow reveal">Flagship blind</span>
+      <h2 class="reveal">{{ spotlight.name }}</h2>
+      <p class="reveal">{{ spotlight.description }}</p>
+      <ul class="spotlight__specs reveal">
+        {% for spec in spotlight.model_number.split('·')[:4] %}
+        <li>{{ spec | trim }}</li>
+        {% endfor %}
+      </ul>
+      <div class="spotlight__row reveal">
+        <span class="spotlight__price">${{ '{:,.0f}'.format(spotlight.price) }}</span>
+        {% if spotlight.price > 1500 %}
+        <span class="spotlight__finance">or ~${{ '{:,.0f}'.format((spotlight.price - 500) / 36) }}/mo with $500 down</span>
+        {% endif %}
+      </div>
+      <div class="hero__ctas reveal">
+        <a class="btn btn--primary btn--lg" href="/products/{{ spotlight.slug }}">View This Blind</a>
+        <button class="btn btn--outline btn--lg" data-add-to-cart
+                data-slug="{{ spotlight.slug }}" data-name="{{ spotlight.name }}"
+                data-price="{{ spotlight.price }}" data-image="{{ spotlight.image }}">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- STATS -->
+<section class="stats-band">
+  <div class="container stats-band__grid">
+    <div class="stat reveal">
+      <span class="stat__num" data-countup="{{ total_products }}">0</span>
+      <span class="stat__label">Products in stock</span>
+    </div>
+    <div class="stat reveal">
+      <span class="stat__num" data-countup="{{ num_states }}">0</span>
+      <span class="stat__label">States we ship to</span>
+    </div>
+    <div class="stat reveal">
+      <span class="stat__num" data-countup="{{ num_categories }}">0</span>
+      <span class="stat__label">Gear categories</span>
+    </div>
+    <div class="stat reveal">
+      <span class="stat__num"><span data-countup="5">0</span>-yr</span>
+      <span class="stat__label">Warranty on select blinds</span>
+    </div>
+  </div>
+</section>
+
+<!-- BRANDS -->
+<section class="section">
+  <div class="container">
+    <div class="section__head reveal">
+      <div>
+        <span class="section__eyebrow">Trusted names</span>
+        <h2>Brands We Carry</h2>
+      </div>
+    </div>
+    <div class="brand-row stagger">
+      {% for brand, n in brand_counts.items() if n >= 2 %}
+      <a class="brand-pill reveal" href="/products?q={{ brand | urlencode }}">{{ brand }}<span>{{ n }}</span></a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

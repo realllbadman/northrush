@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.{% endblock %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css?v={{ ASSET_VERSION }}">
+  <link rel="icon" href="data:image/svg+xml,{{ '<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><path d=%22M4 26 L13 8 L18 17 L22 11 L28 26 Z%22 fill=%22%231f4d3a%22/></svg>' }}">
+</head>
+<body class="page-fade">
+
+  <!-- Promo strip -->
+  <div class="promo-strip">
+    <div class="container promo-strip__inner">
+      <span>Free shipping on orders over $1,500</span>
+      <span class="promo-sep" aria-hidden="true">·</span>
+      <span>Financing available</span>
+      <span class="promo-sep" aria-hidden="true">·</span>
+      <span>Ships to all 50 states</span>
+      {% if BUSINESS.phone %}
+      <span class="promo-sep" aria-hidden="true">·</span>
+      <a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header" id="site-header">
+    <div class="container site-header__inner">
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+        <span></span><span></span><span></span>
+      </button>
+
+      <a class="wordmark" href="/" aria-label="{{ BUSINESS.name }} — home">
+        <svg class="wordmark__glyph" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M4 26 L13 8 L18 17 L22 11 L28 26 Z" />
+        </svg>
+        <span class="wordmark__text">
+          <span class="wordmark__name">NORTHRUSH</span>
+          <span class="wordmark__sub">OUTDOORS</span>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Primary">
+        <a href="/products?category=deer-blinds-stands" class="main-nav__link main-nav__link--lead">Blinds &amp; Stands</a>
+        <a href="/products?category=optics" class="main-nav__link">Optics</a>
+        <a href="/products?category=trail-cameras" class="main-nav__link">Trail Cameras</a>
+        <a href="/products" class="main-nav__link">Gear</a>
+        <a href="/financing" class="main-nav__link">Financing</a>
+        <a href="/about" class="main-nav__link">About</a>
+      </nav>
+
+      <div class="header-actions">
+        <form class="header-search" action="/products" method="get" role="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" name="q" placeholder="Search blinds &amp; gear…" aria-label="Search products" value="{{ q or '' }}">
+        </form>
+        <button class="cart-btn" id="cart-open" aria-label="Open cart">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h2l2.4 10.2a1.5 1.5 0 0 0 1.46 1.15h6.9a1.5 1.5 0 0 0 1.45-1.1L20.5 9H7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10.5" cy="20.5" r="1.4"/><circle cx="16.5" cy="20.5" r="1.4"/></svg>
+          <span class="cart-btn__count" data-cart-count>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer-backdrop" id="mobile-backdrop" hidden></div>
+  <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile menu" aria-hidden="true">
+    <div class="mobile-drawer__head">
+      <span class="wordmark__name">NORTHRUSH</span>
+      <button class="drawer-close" id="mobile-close" aria-label="Close menu">&times;</button>
+    </div>
+    <form class="mobile-search" action="/products" method="get" role="search">
+      <input type="search" name="q" placeholder="Search products…" aria-label="Search products">
+    </form>
+    <div class="mobile-drawer__group">
+      <span class="mobile-drawer__label">Blinds &amp; Stands</span>
+      <a href="/products?category=deer-blinds-stands">All Blinds &amp; Stands</a>
+      {% for sub in CATEGORY_SUBCATEGORIES['deer-blinds-stands'] %}
+      <a href="/products?category=deer-blinds-stands&amp;subcategory={{ sub | urlencode }}">{{ sub }}</a>
+      {% endfor %}
+    </div>
+    <div class="mobile-drawer__group">
+      <span class="mobile-drawer__label">Shop</span>
+      {% for slug, label in CATEGORY_LABELS.items() if slug != 'deer-blinds-stands' %}
+      <a href="/products?category={{ slug }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <div class="mobile-drawer__group">
+      <span class="mobile-drawer__label">NorthRush</span>
+      <a href="/financing">Financing</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a href="/checkout">Checkout</a>
+    </div>
+  </nav>
+
+  <!-- Cart drawer -->
+  <div class="drawer-backdrop" id="cart-backdrop" hidden></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+    <div class="cart-drawer__head">
+      <h2>Your Cart</h2>
+      <button class="drawer-close" id="cart-close" aria-label="Close cart">&times;</button>
+    </div>
+    <div class="cart-drawer__items" id="cart-items"></div>
+    <div class="cart-drawer__foot">
+      <div class="cart-drawer__ship" id="cart-ship-note"></div>
+      <div class="cart-drawer__total">
+        <span>Subtotal</span>
+        <strong id="cart-subtotal">$0.00</strong>
+      </div>
+      <a class="btn btn--primary btn--block" href="/checkout">Review &amp; Request Order</a>
+      <button class="btn btn--ghost btn--block" id="cart-continue">Continue Shopping</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container site-footer__grid">
+      <div class="site-footer__brand">
+        <a class="wordmark wordmark--footer" href="/">
+          <svg class="wordmark__glyph" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M4 26 L13 8 L18 17 L22 11 L28 26 Z" />
+          </svg>
+          <span class="wordmark__text">
+            <span class="wordmark__name">NORTHRUSH</span>
+            <span class="wordmark__sub">OUTDOORS</span>
+          </span>
+        </a>
+        <p>Premium deer blinds, stands and hunting gear — northern-grade quality, shipped to all 50 states.</p>
+      </div>
+      <div>
+        <h3>Blinds &amp; Stands</h3>
+        <ul>
+          {% for sub in CATEGORY_SUBCATEGORIES['deer-blinds-stands'][:6] %}
+          <li><a href="/products?category=deer-blinds-stands&amp;subcategory={{ sub | urlencode }}">{{ sub }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3>Shop</h3>
+        <ul>
+          {% for slug, label in CATEGORY_LABELS.items() if slug != 'deer-blinds-stands' %}
+          <li><a href="/products?category={{ slug }}">{{ label }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3>Company</h3>
+        <ul>
+          <li><a href="/about">About NorthRush</a></li>
+          <li><a href="/financing">Financing</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/checkout">Checkout</a></li>
+        </ul>
+        <h3 class="site-footer__contact-h">Get in touch</h3>
+        <ul class="site-footer__contact">
+          {% if BUSINESS.phone %}<li><a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a></li>{% endif %}
+          {% if BUSINESS.email %}<li><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>{% endif %}
+          {% if BUSINESS.address %}<li>{{ BUSINESS.address }}</li>{% endif %}
+          <li>{{ BUSINESS.hours }}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="container site-footer__legal">
+      <span>&copy; {{ current_year }} {{ BUSINESS.name }}. All rights reserved.</span>
+      <span>Free shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }} · Financing available</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/static/js/main.js?v={{ ASSET_VERSION }}" defer></script>
+  <script src="/static/js/animations.js?v={{ ASSET_VERSION }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}About — {{ BUSINESS.name }}{% endblock %}
+
+{% block content %}
+<section class="about-page">
+  <div class="container">
+    <header class="listing__head reveal">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <span>About</span></nav>
+        <h1>Built for the North. Shipped Everywhere.</h1>
+      </div>
+    </header>
+
+    <div class="about-page__body">
+      <div class="about-page__story reveal">
+        <p class="about-lede">NorthRush Outdoors started with one belief: a deer blind isn't a tent — it's the difference between a good season and a great one. We hand-pick blinds and stands that survive northern winters, then ship them to hunters in all {{ num_states }} states.</p>
+        <p>We're hunters first. Every blind in our lineup — from a packable ground blind to a full insulated tower package — is a model we'd put on our own land. That's why the catalog is deep on blinds and stands ({{ total_products }} products across the whole store) and shallow on gimmicks.</p>
+        <p>Ordering is old-school on purpose. You build a cart, send it in, and a real person calls you back to confirm stock, freight to your county, and payment on your terms — bank transfer, Zelle or PayPal. No card forms, no surprises on the invoice.</p>
+      </div>
+
+      <div class="about-page__values stagger">
+        <div class="value-card reveal">
+          <h3>Blinds first</h3>
+          <p>Ground, 360°, elevated, tower — the deepest blind lineup we can stand behind, plus everything that goes with it.</p>
+        </div>
+        <div class="value-card reveal">
+          <h3>Straight pricing</h3>
+          <p>Free shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }}, flat ${{ BUSINESS.flat_shipping }} otherwise, and financing at $500 down / 36 months on the big stuff.</p>
+        </div>
+        <div class="value-card reveal">
+          <h3>A person answers</h3>
+          <p>Call {{ BUSINESS.phone or 'us' }} during {{ BUSINESS.hours }} and you'll get someone who has hunted out of the blinds we sell.</p>
+        </div>
+      </div>
+
+      <div class="about-page__cta reveal">
+        <h2>Ready to claim your spot in the woods?</h2>
+        <div class="hero__ctas">
+          <a class="btn btn--primary btn--lg" href="/products?category=deer-blinds-stands">Shop Blinds &amp; Stands</a>
+          <a class="btn btn--outline btn--lg" href="/contact">Ask Us Anything</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

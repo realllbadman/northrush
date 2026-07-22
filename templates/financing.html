@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Financing — {{ BUSINESS.name }}{% endblock %}
+
+{% block content %}
+<section class="finance-page">
+  <div class="container">
+    <header class="listing__head reveal">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <span>Financing</span></nav>
+        <h1>Simple Blind Financing</h1>
+        <p class="listing__count">On any item over ${{ '{:,.0f}'.format(financing_min) }}: put ${{ financing_down }} down, split the rest over {{ financing_months }} months. No hidden math.</p>
+      </div>
+    </header>
+
+    <div class="finance-page__layout">
+
+      <!-- Calculator -->
+      <div class="calc reveal">
+        <h2>Payment Calculator</h2>
+        <label class="calc__label" for="calc-product">Pick an eligible item</label>
+        <select id="calc-product">
+          <option value="">Custom price…</option>
+          {% for p in eligible %}
+          <option value="{{ p.price }}">{{ p.name }} — ${{ '{:,.0f}'.format(p.price) }}</option>
+          {% endfor %}
+        </select>
+        <label class="calc__label" for="calc-price">Item price ($)</label>
+        <input type="number" id="calc-price" min="{{ financing_min + 1 }}" step="1" value="{{ eligible[0].price if eligible else 1600 }}">
+        <div class="calc__readout" aria-live="polite">
+          <div><span>Down payment</span><strong>${{ financing_down }}</strong></div>
+          <div><span>Term</span><strong>{{ financing_months }} months</strong></div>
+          <div class="calc__monthly"><span>Estimated monthly</span><strong id="calc-monthly">$0</strong></div>
+        </div>
+        <p class="co-form__fine" id="calc-note">Financing applies to items over ${{ '{:,.0f}'.format(financing_min) }}.</p>
+      </div>
+
+      <!-- Application -->
+      <form class="co-form reveal" id="financing-form" novalidate>
+        <h2>Apply for Financing</h2>
+        <div class="co-form__row">
+          <label>First name *<input type="text" name="first_name" required></label>
+          <label>Last name<input type="text" name="last_name"></label>
+        </div>
+        <div class="co-form__row">
+          <label>Phone *<input type="tel" name="phone" required></label>
+          <label>Email<input type="email" name="email"></label>
+        </div>
+        <label>Which blind or item are you interested in?
+          <input type="text" name="product_interest" id="fin-product-interest" placeholder="e.g. Orion 6×6 Premium">
+        </label>
+        <label>Anything we should know?
+          <textarea name="details" rows="4" placeholder="Timeline, land setup, questions…"></textarea>
+        </label>
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Submit Application</button>
+        <p class="co-form__fine">We'll call you to confirm terms — submitting costs nothing and doesn't commit you.</p>
+      </form>
+    </div>
+
+    <div class="section__head reveal" style="margin-top:3rem">
+      <div>
+        <span class="section__eyebrow">Eligible right now</span>
+        <h2>Blinds &amp; Gear You Can Finance</h2>
+      </div>
+    </div>
+    <div class="grid grid--cards stagger">
+      {% from "_card.html" import product_card %}
+      {% for p in eligible %}
+      {{ product_card(p) }}
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var sel = document.getElementById('calc-product');
+    var price = document.getElementById('calc-price');
+    var monthly = document.getElementById('calc-monthly');
+    var note = document.getElementById('calc-note');
+    var MIN = {{ financing_min }}, DOWN = {{ financing_down }}, MONTHS = {{ financing_months }};
+    function update() {
+      var p = parseFloat(price.value) || 0;
+      if (p > MIN) {
+        monthly.textContent = '$' + Math.round((p - DOWN) / MONTHS).toLocaleString() + '/mo';
+        note.textContent = '$' + DOWN + ' down, then ' + MONTHS + ' monthly payments.';
+      } else {
+        monthly.textContent = '—';
+        note.textContent = 'Financing applies to items over $' + MIN.toLocaleString() + '.';
+      }
+    }
+    sel.addEventListener('change', function () {
+      if (sel.value) {
+        price.value = sel.value;
+        var label = sel.options[sel.selectedIndex].text.split(' — ')[0];
+        var interest = document.getElementById('fin-product-interest');
+        if (interest && !interest.value) interest.value = label;
+      }
+      update();
+    });
+    price.addEventListener('input', update);
+    update();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% macro product_card(p) %}
+<article class="card reveal"
+         data-category="{{ p.category }}"
+         data-subcategory="{{ p.subcategory }}"
+         data-price="{{ p.price }}"
+         data-name="{{ p.name | lower }} {{ p.brand | lower }}">
+  {% if p.badge %}<span class="card__badge card__badge--{{ p.badge | lower | replace(' ', '-') }}">{{ p.badge }}</span>{% endif %}
+  <a class="card__imgbox {% if img_is_portrait(p.image) %}card__imgbox--tall{% endif %}" href="/products/{{ p.slug }}" aria-label="{{ p.name }}">
+    <img src="{{ img_url(p.image) }}" alt="{{ p.name }}" loading="lazy"
+         onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
+  </a>
+  <div class="card__body">
+    <span class="card__brand">{{ p.brand }}</span>
+    <h3 class="card__name"><a href="/products/{{ p.slug }}">{{ p.name }}</a></h3>
+    {% if p.model_number %}
+    <div class="card__chips">
+      {% for spec in p.model_number.split('·')[:3] %}
+      <span class="chip">{{ spec | trim }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="card__pricing">
+      <span class="card__price">${{ '{:,.0f}'.format(p.price) }}{% if p.price_max %}<span class="card__price-range">–${{ '{:,.0f}'.format(p.price_max) }}</span>{% endif %}</span>
+      {% if p.original_price %}<s class="card__was">${{ '{:,.0f}'.format(p.original_price) }}</s>{% endif %}
+    </div>
+    <div class="card__actions">
+      <button class="btn btn--primary btn--sm"
+              data-add-to-cart
+              data-slug="{{ p.slug }}"
+              data-name="{{ p.name }}"
+              data-price="{{ p.price }}"
+              data-image="{{ p.image }}">Add to Cart</button>
+      <a class="btn btn--ghost btn--sm" href="/products/{{ p.slug }}">Details</a>
+    </div>
+  </div>
+</article>
+{% endmacro %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "_card.html" import product_card %}
+
+{% block title %}{{ category_label }} — {{ BUSINESS.name }}{% endblock %}
+
+{% block content %}
+<section class="listing">
+  <div class="container">
+
+    {% if not_found %}
+    <div class="notice notice--warn reveal">
+      <h1>We couldn't find that product</h1>
+      <p>"{{ missing_slug }}" isn't in our catalog (it may have been retired). Here are some picks instead — or browse the full lineup below.</p>
+    </div>
+    {% else %}
+    <header class="listing__head reveal">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <a href="/">Home</a> <span>/</span>
+          <a href="/products">Shop</a>
+          {% if active_category %}<span>/</span> <span>{{ category_label }}</span>{% endif %}
+        </nav>
+        <h1>{{ category_label }}{% if active_subcategory %} · {{ active_subcategory }}{% endif %}</h1>
+        <p class="listing__count"><span id="result-count">{{ result_count }}</span> product{{ '' if result_count == 1 else 's' }}{% if q %} for “{{ q }}”{% endif %}</p>
+      </div>
+    </header>
+    {% endif %}
+
+    <div class="listing__layout">
+
+      <!-- Filters sidebar -->
+      <aside class="filters" id="filters" aria-label="Filters">
+        <div class="filters__block">
+          <label class="filters__label" for="filter-search">Search</label>
+          <input type="search" id="filter-search" placeholder="Filter results…" value="{{ q }}">
+        </div>
+
+        <div class="filters__block">
+          <span class="filters__label">Blinds &amp; Stands</span>
+          <ul class="filters__list filters__list--featured">
+            <li><a class="{% if active_category == 'deer-blinds-stands' and not active_subcategory %}is-active{% endif %}"
+                   href="/products?category=deer-blinds-stands">All Blinds &amp; Stands <em>{{ category_counts['deer-blinds-stands'] }}</em></a></li>
+            {% for sub in CATEGORY_SUBCATEGORIES['deer-blinds-stands'] %}
+            <li><a class="{% if active_subcategory == sub %}is-active{% endif %}"
+                   href="/products?category=deer-blinds-stands&amp;subcategory={{ sub | urlencode }}">{{ sub }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="filters__block">
+          <span class="filters__label">Categories</span>
+          <ul class="filters__list">
+            <li><a class="{% if not active_category %}is-active{% endif %}" href="/products">All Products <em>{{ category_counts.values() | sum }}</em></a></li>
+            {% for slug, label in CATEGORY_LABELS.items() if slug != 'deer-blinds-stands' %}
+            <li><a class="{% if active_category == slug %}is-active{% endif %}"
+                   href="/products?category={{ slug }}">{{ label }} <em>{{ category_counts[slug] }}</em></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        {% if active_category and active_category != 'deer-blinds-stands' and subcategories %}
+        <div class="filters__block">
+          <span class="filters__label">{{ category_label }}</span>
+          <ul class="filters__list">
+            {% for sub in subcategories %}
+            <li><a class="{% if active_subcategory == sub %}is-active{% endif %}"
+                   href="/products?category={{ active_category }}&amp;subcategory={{ sub | urlencode }}">{{ sub }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </aside>
+
+      <!-- Results -->
+      <div class="listing__results">
+        <div class="listing__toolbar reveal">
+          <button class="btn btn--ghost btn--sm listing__filter-toggle" id="filter-toggle" aria-expanded="false" aria-controls="filters">Filters</button>
+          <label class="sort">
+            <span>Sort</span>
+            <select id="sort-select" aria-label="Sort products">
+              <option value="price-asc" selected>Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
+              <option value="name-asc">Name: A → Z</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid grid--cards stagger" id="product-grid">
+          {% for p in products %}
+          {{ product_card(p) }}
+          {% endfor %}
+        </div>
+
+        <div class="empty-state" id="empty-state" {% if products %}hidden{% endif %}>
+          <h2>No matches</h2>
+          <p>Try a different search or clear your filters.</p>
+          <a class="btn btn--primary" href="/products">Browse all products</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

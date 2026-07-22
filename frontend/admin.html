@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthRush Admin</title>
+  <style>
+    :root {
+      --forest: #1f4d3a; --forest-dk: #163a2c; --pine: #2e6f52;
+      --canvas: #f7f5f0; --card: #fff; --ink: #16241d; --muted: #6b7580;
+      --amber: #e08a2b; --border: #e6e3db;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: "Inter", system-ui, sans-serif; background: var(--canvas); color: var(--ink); line-height: 1.5; }
+    header { background: var(--forest-dk); color: #fff; padding: 0.9rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { font-size: 1.05rem; letter-spacing: 0.05em; }
+    header .tag { background: var(--amber); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .row { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 0.4rem; }
+    .tab { border: 1px solid var(--border); background: var(--card); padding: 0.5rem 1.1rem; border-radius: 999px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .tab.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+    .count { background: rgba(31,77,58,.1); color: var(--forest); font-weight: 700; font-size: 0.75rem; padding: 0.1rem 0.55rem; border-radius: 999px; margin-left: 0.35rem; }
+    button.refresh { margin-left: auto; border: 1px solid var(--border); background: var(--card); padding: 0.5rem 1rem; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.3rem; margin-bottom: 0.9rem; }
+    .item__head { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+    .item__head h3 { font-size: 1rem; }
+    .item__head .when { color: var(--muted); font-size: 0.78rem; }
+    .item__head .total { margin-left: auto; font-weight: 800; color: var(--forest); font-size: 1.05rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; margin: 0.5rem 0; font-size: 0.85rem; color: var(--muted); }
+    .meta b { color: var(--ink); font-weight: 600; }
+    .items-list { margin: 0.5rem 0; padding: 0.6rem 0.9rem; background: var(--canvas); border-radius: 10px; font-size: 0.85rem; }
+    .items-list li { margin-left: 1rem; }
+    .notes { font-size: 0.85rem; background: #fdf6ec; border: 1px solid #f0ddc0; border-radius: 10px; padding: 0.5rem 0.8rem; margin: 0.5rem 0; }
+    .del { border: 1px solid #e5b6b2; color: #b3372f; background: #fdf1f0; padding: 0.35rem 0.9rem; border-radius: 999px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-top: 0.4rem; }
+    .del:hover { background: #b3372f; color: #fff; }
+    .empty, .error { text-align: center; color: var(--muted); padding: 3rem 1rem; }
+    .error { color: #b3372f; }
+    @media (max-width: 600px) { main { padding: 1rem; } .item__head .total { margin-left: 0; width: 100%; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NORTHRUSH OUTDOORS</h1>
+    <span class="tag">ADMIN</span>
+  </header>
+  <main>
+    <div class="row">
+      <div class="tabs">
+        <button class="tab active" data-tab="inquiries">Orders<span class="count" id="count-inquiries">0</span></button>
+        <button class="tab" data-tab="bookings">Messages<span class="count" id="count-bookings">0</span></button>
+      </div>
+      <button class="refresh" id="refresh">↻ Refresh</button>
+    </div>
+    <div id="content"><p class="empty">Loading…</p></div>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+      var state = { tab: "inquiries", data: { inquiries: [], bookings: [] } };
+      var content = document.getElementById("content");
+
+      function money(n) { return "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2 }); }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+      function when(iso) {
+        if (!iso) return "";
+        var d = new Date(iso + (iso.endsWith("Z") ? "" : "Z"));
+        return d.toLocaleString();
+      }
+
+      function load() {
+        content.innerHTML = '<p class="empty">Loading…</p>';
+        fetch("/admin/data")
+          .then(function (r) {
+            if (r.status === 401) throw new Error("auth");
+            if (!r.ok) throw new Error("http");
+            return r.json();
+          })
+          .then(function (data) {
+            state.data = data;
+            document.getElementById("count-inquiries").textContent = data.inquiries.length;
+            document.getElementById("count-bookings").textContent = data.bookings.length;
+            render();
+          })
+          .catch(function (e) {
+            content.innerHTML = '<p class="error">' + (e.message === "auth"
+              ? "Not authorized — reload the page and enter your admin credentials."
+              : "Couldn't load data. Is the server running?") + "</p>";
+          });
+      }
+
+      function render() {
+        var rows = state.data[state.tab] || [];
+        if (!rows.length) {
+          content.innerHTML = '<p class="empty">Nothing here yet.</p>';
+          return;
+        }
+        content.innerHTML = rows.map(state.tab === "inquiries" ? renderInquiry : renderBooking).join("");
+      }
+
+      function renderInquiry(i) {
+        var items = (i.items || []).map(function (it) {
+          return "<li>" + esc(it.qty) + " × " + esc(it.name) + " @ " + money(it.price) + "</li>";
+        }).join("");
+        return '<div class="item">' +
+          '<div class="item__head"><h3>#' + i.id + " — " + esc(i.name) + '</h3>' +
+          '<span class="when">' + esc(when(i.created_at)) + '</span>' +
+          '<span class="total">' + money(i.total) + "</span></div>" +
+          '<div class="meta">' +
+            "<span><b>Phone:</b> " + esc(i.phone) + "</span>" +
+            (i.email ? "<span><b>Email:</b> " + esc(i.email) + "</span>" : "") +
+            (i.address ? "<span><b>Ship to:</b> " + esc(i.address) + ", " + esc(i.country) + "</span>" : "") +
+            "<span><b>Freight:</b> " + esc(i.freight_region) + "</span>" +
+            "<span><b>Contact:</b> " + esc(i.contact_pref) + (i.best_time ? " (" + esc(i.best_time) + ")" : "") + "</span>" +
+            "<span><b>Payment:</b> " + esc(i.payment_method) + "</span>" +
+          "</div>" +
+          (items ? '<ul class="items-list">' + items + "</ul>" : "") +
+          (i.notes ? '<div class="notes">' + esc(i.notes) + "</div>" : "") +
+          '<button class="del" data-kind="inquiries" data-id="' + i.id + '">Delete</button>' +
+        "</div>";
+      }
+
+      function renderBooking(b) {
+        return '<div class="item">' +
+          '<div class="item__head"><h3>#' + b.id + " — " + esc(b.name) + '</h3>' +
+          '<span class="when">' + esc(when(b.created_at)) + "</span></div>" +
+          '<div class="meta">' +
+            "<span><b>Type:</b> " + esc(b.service) + "</span>" +
+            (b.phone ? "<span><b>Phone:</b> " + esc(b.phone) + "</span>" : "") +
+            (b.email ? "<span><b>Email:</b> " + esc(b.email) + "</span>" : "") +
+            (b.product_interest ? "<span><b>Product:</b> " + esc(b.product_interest) + "</span>" : "") +
+          "</div>" +
+          (b.details ? '<div class="notes">' + esc(b.details) + "</div>" : "") +
+          '<button class="del" data-kind="bookings" data-id="' + b.id + '">Delete</button>' +
+        "</div>";
+      }
+
+      document.addEventListener("click", function (e) {
+        var tab = e.target.closest(".tab");
+        if (tab) {
+          state.tab = tab.getAttribute("data-tab");
+          document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+          tab.classList.add("active");
+          render();
+          return;
+        }
+        var del = e.target.closest(".del");
+        if (del) {
+          var kind = del.getAttribute("data-kind");
+          var id = del.getAttribute("data-id");
+          if (!confirm("Delete " + (kind === "inquiries" ? "order" : "message") + " #" + id + "? This can't be undone.")) return;
+          fetch("/admin/" + kind + "/" + id, { method: "DELETE" })
+            .then(function (r) { if (!r.ok) throw new Error(); load(); })
+            .catch(function () { alert("Delete failed — try refreshing."); });
+        }
+      });
+
+      document.getElementById("refresh").addEventListener("click", load);
+      load();
+    })();
+  </script>
+</body>
+</html>

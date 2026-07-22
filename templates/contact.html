@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — {{ BUSINESS.name }}{% endblock %}
+
+{% block content %}
+<section class="contact-page">
+  <div class="container">
+    <header class="listing__head reveal">
+      <div>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <span>Contact</span></nav>
+        <h1>Talk to a Real Hunter</h1>
+        <p class="listing__count">Questions on a blind, freight to your county, or a custom setup — we answer within one business day.</p>
+      </div>
+    </header>
+
+    <div class="contact-page__layout">
+
+      <div class="contact-info reveal">
+        <h2>{{ BUSINESS.name }}</h2>
+        <ul class="contact-info__list">
+          {% if BUSINESS.phone %}
+          <li><span>Phone</span><a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a></li>
+          {% endif %}
+          {% if BUSINESS.email %}
+          <li><span>Email</span><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>
+          {% endif %}
+          {% if BUSINESS.address %}
+          <li><span>Address</span>{{ BUSINESS.address }}</li>
+          {% endif %}
+          <li><span>Hours</span>{{ BUSINESS.hours }}</li>
+        </ul>
+        <div class="contact-info__promo">
+          <h3>Before you call</h3>
+          <ul>
+            <li>Free shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }} — most tower packages qualify</li>
+            <li>Financing: $500 down, 36 months, on items over $1,500</li>
+            <li>We ship to all 50 states &amp; internationally by region</li>
+          </ul>
+        </div>
+      </div>
+
+      <form class="co-form reveal" id="contact-form" novalidate>
+        <h2>Send a Message</h2>
+        <div class="co-form__row">
+          <label>First name *<input type="text" name="first_name" required></label>
+          <label>Last name<input type="text" name="last_name"></label>
+        </div>
+        <div class="co-form__row">
+          <label>Phone<input type="tel" name="phone"></label>
+          <label>Email *<input type="email" name="email" required></label>
+        </div>
+        <label>What's this about?
+          <select name="service">
+            <option>General</option>
+            <option>Product Question</option>
+            <option>Installation</option>
+            <option>Consultation</option>
+            <option>Freight Quote</option>
+          </select>
+        </label>
+        <label>Product (if any)
+          <input type="text" name="product_interest" id="contact-product">
+        </label>
+        <label>Message *
+          <textarea name="details" rows="5" required></textarea>
+        </label>
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Send Message</button>
+      </form>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Pre-fill product from ?product= (linked from "Request a Quote")
+  (function () {
+    var slug = new URLSearchParams(location.search).get('product');
+    if (slug) {
+      var el = document.getElementById('contact-product');
+      if (el) el.value = slug.replace(/-/g, ' ');
+      var svc = document.querySelector('#contact-form select[name="service"]');
+      if (svc) svc.value = 'Product Question';
+    }
+  })();
+</script>
+{% endblock %}

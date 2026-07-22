@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "_card.html" import product_card %}
+
+{% block title %}{{ product.name }} — {{ BUSINESS.name }}{% endblock %}
+{% block meta_description %}{{ product.description | truncate(150) }}{% endblock %}
+
+{% block content %}
+<section class="pdp">
+  <div class="container">
+
+    <nav class="crumbs reveal" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span>/</span>
+      <a href="/products?category={{ product.category }}">{{ category_label }}</a> <span>/</span>
+      <span>{{ product.name }}</span>
+    </nav>
+
+    <div class="pdp__grid">
+
+      <!-- Gallery -->
+      <div class="pdp__gallery reveal">
+        <div class="pdp__stage {% if img_is_portrait(product.image) %}pdp__stage--tall{% endif %}" id="pdp-stage">
+          <img id="pdp-main-img" src="{{ img_url(product.image) }}" alt="{{ product.name }}"
+               onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
+        </div>
+        {% if product.images and product.images | length > 1 %}
+        <div class="pdp__thumbs">
+          {% for im in product.images %}
+          <button class="pdp__thumb {% if loop.first %}is-active{% endif %}" data-full="{{ img_url(im) }}" aria-label="Photo {{ loop.index }}">
+            <img src="{{ img_url(im) }}" alt="" loading="lazy"
+                 onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Buy panel -->
+      <div class="pdp__panel">
+        {% if product.badge %}<span class="card__badge card__badge--{{ product.badge | lower | replace(' ', '-') }}">{{ product.badge }}</span>{% endif %}
+        <span class="pdp__brand reveal">{{ product.brand }}</span>
+        <h1 class="reveal">{{ product.name }}</h1>
+
+        <div class="pdp__pricing reveal">
+          <span class="pdp__price">${{ '{:,.0f}'.format(product.price) }}{% if product.price_max %} – ${{ '{:,.0f}'.format(product.price_max) }}{% endif %}</span>
+          {% if product.original_price %}<s class="card__was">${{ '{:,.0f}'.format(product.original_price) }}</s>{% endif %}
+        </div>
+
+        {% if product.price > BUSINESS.free_ship_threshold %}
+        <p class="pdp__ship-note reveal">✓ Free shipping — this item qualifies</p>
+        {% else %}
+        <p class="pdp__ship-note pdp__ship-note--flat reveal">Flat ${{ BUSINESS.flat_shipping }} domestic shipping (free over ${{ '%d' | format(BUSINESS.free_ship_threshold) }})</p>
+        {% endif %}
+
+        {% if product.price > financing_min %}
+        <div class="finance-box reveal">
+          <strong>~${{ '{:,.0f}'.format((product.price - financing_down) / financing_months) }}/mo</strong>
+          <span>with ${{ financing_down }} down over {{ financing_months }} months — <a href="/financing">apply for financing</a></span>
+        </div>
+        {% endif %}
+
+        <p class="pdp__stock reveal {% if product.in_stock %}is-in{% else %}is-out{% endif %}">
+          {{ 'In stock — ships within 5–10 business days' if product.in_stock else 'Currently backordered — contact us for lead time' }}
+        </p>
+
+        <div class="pdp__ctas reveal">
+          <button class="btn btn--primary btn--lg" data-add-to-cart
+                  data-slug="{{ product.slug }}" data-name="{{ product.name }}"
+                  data-price="{{ product.price }}" data-image="{{ product.image }}">Add to Cart</button>
+          <a class="btn btn--outline btn--lg" href="/contact?product={{ product.slug | urlencode }}">Request a Quote</a>
+        </div>
+
+        {% if product.model_number %}
+        <table class="pdp__specs reveal">
+          <caption>Specifications</caption>
+          <tbody>
+            {% for spec in product.model_number.split('·') %}
+            <tr><td>{{ spec | trim }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Description + features -->
+    <div class="pdp__info">
+      <div class="pdp__desc reveal">
+        <h2>About this {{ 'blind' if product.category == 'deer-blinds-stands' else 'product' }}</h2>
+        <p>{{ product.description }}</p>
+      </div>
+      {% if product.features %}
+      <div class="pdp__features reveal">
+        <h2>Features</h2>
+        <ul>
+          {% for f in product.features %}
+          <li>{{ f }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Related -->
+    {% if related %}
+    <div class="section__head reveal">
+      <div>
+        <span class="section__eyebrow">More from {{ category_label }}</span>
+        <h2>You Might Also Like</h2>
+      </div>
+    </div>
+    <div class="grid grid--cards grid--related stagger">
+      {% for p in related %}
+      {{ product_card(p) }}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
