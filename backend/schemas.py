@@ -30,6 +30,7 @@ class InquiryCreate(BaseModel):
     notes: str = ""
     items: List[CartItem] = []
     total: float = 0.0
+    website: str = ""          # honeypot — humans leave this empty
 
 
 class BookingCreate(BaseModel):
@@ -40,6 +41,7 @@ class BookingCreate(BaseModel):
     service: str = "General"
     product_interest: str = ""
     details: str = ""
+    website: str = ""          # honeypot — humans leave this empty
 
 
 class MessageOut(BaseModel):
