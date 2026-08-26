@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.{% endblock %}">
+  {% block social_meta %}
+  <meta property="og:site_name" content="{{ BUSINESS.name }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{% block og_title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}">
+  <meta property="og:description" content="Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.">
+  <meta property="og:image" content="{{ og_image(request) }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear">
+  <meta name="twitter:image" content="{{ og_image(request) }}">
+  {% endblock %}
+  <link rel="canonical" href="{{ site_origin(request) }}{{ request.url.path }}">
+  <meta name="theme-color" content="#1f4d3a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -160,10 +172,14 @@
           <li><a href="/financing">Financing</a></li>
           <li><a href="/contact">Contact</a></li>
           <li><a href="/checkout">Checkout</a></li>
+          <li><a href="/shipping-returns">Shipping &amp; Returns</a></li>
+          <li><a href="/privacy">Privacy</a></li>
+          <li><a href="/terms">Terms of Sale</a></li>
         </ul>
         <h3 class="site-footer__contact-h">Get in touch</h3>
         <ul class="site-footer__contact">
           {% if BUSINESS.phone %}<li><a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a></li>{% endif %}
+          {% if BUSINESS.whatsapp %}<li><a href="https://wa.me/{{ BUSINESS.whatsapp }}" target="_blank" rel="noopener">WhatsApp us</a></li>{% endif %}
           {% if BUSINESS.email %}<li><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>{% endif %}
           {% if BUSINESS.address %}<li>{{ BUSINESS.address }}</li>{% endif %}
           <li>{{ BUSINESS.hours }}</li>
@@ -181,5 +197,20 @@
   <script src="/static/js/main.js?v={{ ASSET_VERSION }}" defer></script>
   <script src="/static/js/animations.js?v={{ ASSET_VERSION }}" defer></script>
   {% block scripts %}{% endblock %}
+
+  {% if SMARTSUPP_KEY %}
+  <!-- Smartsupp Live Chat -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '{{ SMARTSUPP_KEY }}';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
+  <noscript>Powered by <a href="https://www.smartsupp.com" target="_blank" rel="noopener">Smartsupp</a></noscript>
+  {% endif %}
 </body>
 </html>

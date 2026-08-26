@@ -1,15 +1,18 @@
 """NorthRush Outdoors — FastAPI app: lifespan seeding, Jinja env, page routes."""
 import os
 import struct
+from html import escape
 from contextlib import asynccontextmanager
 from datetime import datetime
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
@@ -29,12 +32,25 @@ from backend.seed_data import (  # noqa: E402
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "2"  # bump on every CSS/JS change
+ASSET_VERSION = "6"  # bump on every CSS/JS change
+
+# Smartsupp live chat. Public site key — blank it to disable the widget
+# (kept out of dev/test that way).
+SMARTSUPP_KEY = os.getenv("SMARTSUPP_KEY", "")
+
+# Public origin, used for canonical/OG URLs and the sitemap. Falls back to
+# whatever host the request arrived on, so dev keeps working unset.
+SITE_URL = os.getenv("SITE_URL", "").rstrip("/")
+
+
+def site_url(request: Request) -> str:
+    return SITE_URL or str(request.base_url).rstrip("/")
 
 BUSINESS = {
     "name": os.getenv("BUSINESS_NAME", "NorthRush Outdoors"),
     "email": os.getenv("BUSINESS_EMAIL", os.getenv("OWNER_EMAIL", "")),
     "phone": os.getenv("OWNER_PHONE", ""),
+    "whatsapp": os.getenv("BUSINESS_WHATSAPP", "").replace("+", "").replace(" ", ""),
     "address": os.getenv("BUSINESS_ADDRESS", ""),
     "hours": os.getenv("BUSINESS_HOURS", "Mon–Sat 8am–6pm CT"),
     "free_ship_threshold": 1500,
@@ -118,6 +134,24 @@ def _read_dimensions(path):
     return None
 
 
+_dims_cache: dict = {}
+
+
+def img_dims(filename):
+    """(width, height) for a local image, or None. Cached — headers only."""
+    if not filename or filename.startswith("http"):
+        return None
+    if filename not in _dims_cache:
+        _dims_cache[filename] = _read_dimensions(os.path.join(IMAGES_DIR, filename))
+    return _dims_cache[filename]
+
+
+def img_size_attrs(filename):
+    """Ready-to-drop width/height attributes — stops cumulative layout shift."""
+    dims = img_dims(filename)
+    return Markup(f' width="{dims[0]}" height="{dims[1]}"') if dims else Markup("")
+
+
 def img_is_portrait(filename) -> bool:
     """True when the image is clearly taller than wide (used to style tall photos)."""
     if not filename or filename.startswith("http"):
@@ -173,10 +207,17 @@ app.include_router(admin.router)
 
 
 @app.middleware("http")
-async def no_cache_html(request: Request, call_next):
+async def security_and_cache_headers(request: Request, call_next):
     response = await call_next(request)
     if response.headers.get("content-type", "").startswith("text/html"):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # Only meaningful over TLS; Nginx forwards the original scheme.
+    if request.headers.get("x-forwarded-proto") == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 
@@ -199,11 +240,17 @@ _env.globals.update(
     FREIGHT_REGIONS=FREIGHT_REGIONS,
     US_STATES=US_STATES,
     ASSET_VERSION=ASSET_VERSION,
+    LEGAL_UPDATED=datetime.now().strftime("%B %-d, %Y"),
+    SMARTSUPP_KEY=SMARTSUPP_KEY,
     current_year=datetime.now().year,
     img_url=img_url,
     img_is_portrait=img_is_portrait,
+    img_size_attrs=img_size_attrs,
+    site_origin=site_url,
+    og_image=lambda request: f"{site_url(request)}/static/images/logo.png",
 )
 templates = Jinja2Templates(env=_env)
+
 
 
 # --------------------------------------------------------------------------- #
@@ -409,6 +456,75 @@ def admin_page(_: str = Depends(admin.require_admin)):
     # Basic auth on the page itself so the browser prompts once, then reuses
     # the credentials for the /admin/data fetch.
     return FileResponse(os.path.join(BASE_DIR, "frontend", "admin.html"))
+
+
+@app.get("/privacy")
+def privacy(request: Request):
+    return templates.TemplateResponse(request, "privacy.html", {})
+
+
+@app.get("/terms")
+def terms(request: Request):
+    return templates.TemplateResponse(request, "terms.html", {
+        "financing_months": FINANCING_MONTHS,
+        "financing_down": FINANCING_DOWN,
+        "financing_min": FINANCING_MIN_PRICE,
+    })
+
+
+@app.get("/shipping-returns")
+def shipping_returns(request: Request):
+    return templates.TemplateResponse(request, "shipping.html", {
+        "num_states": len(US_STATES),
+    })
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots(request: Request):
+    body = "\n".join([
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /checkout",
+        "",
+        f"Sitemap: {site_url(request)}/sitemap.xml",
+        "",
+    ])
+    return PlainTextResponse(body)
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap(request: Request, db: Session = Depends(get_db)):
+    base = site_url(request)
+    urls = [(f"{base}/", "1.0"), (f"{base}/products", "0.9"),
+            (f"{base}/financing", "0.7"), (f"{base}/about", "0.5"),
+            (f"{base}/contact", "0.5"), (f"{base}/shipping-returns", "0.4"),
+            (f"{base}/privacy", "0.3"), (f"{base}/terms", "0.3")]
+    for cat in CATEGORY_LABELS:
+        urls.append((f"{base}/products?category={cat}", "0.8"))
+    for (slug,) in db.query(Product.slug).order_by(Product.slug).all():
+        urls.append((f"{base}/products/{slug}", "0.8"))
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    items = "".join(
+        f"<url><loc>{escape(loc)}</loc><lastmod>{today}</lastmod>"
+        f"<priority>{pri}</priority></url>"
+        for loc, pri in urls
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           f"{items}</urlset>")
+    return Response(content=xml, media_type="application/xml")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Browsers get the branded 404 page; API clients keep getting JSON."""
+    wants_html = "text/html" in request.headers.get("accept", "")
+    if exc.status_code == 404 and wants_html:
+        return templates.TemplateResponse(request, "404.html", {}, status_code=404)
+    headers = getattr(exc, "headers", None)
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code, headers=headers)
 
 
 @app.get("/health")

@@ -20,6 +20,10 @@
     return "/static/images/" + img;
   }
 
+  function validEmail(v) {
+    return !v || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+  }
+
   var toastTimer;
   function toast(msg) {
     var el = $("#toast");
@@ -203,6 +207,36 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Homepage category chip slider (arrow buttons + edge fades)         */
+  /* ------------------------------------------------------------------ */
+  function initChipSlider() {
+    var slider = $("#chip-slider");
+    if (!slider) return;
+    var wrap = slider.parentElement;
+    var prev = $("#chip-prev");
+    var next = $("#chip-next");
+
+    function update() {
+      var max = slider.scrollWidth - slider.clientWidth - 1;
+      var canLeft = slider.scrollLeft > 1;
+      var canRight = slider.scrollLeft < max;
+      prev.disabled = !canLeft;
+      next.disabled = !canRight;
+      wrap.classList.toggle("can-left", canLeft);
+      wrap.classList.toggle("can-right", canRight);
+    }
+    function page(dir) {
+      slider.scrollBy({ left: dir * slider.clientWidth * 0.75, behavior: "smooth" });
+    }
+
+    prev.addEventListener("click", function () { page(-1); });
+    next.addEventListener("click", function () { page(1); });
+    slider.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  PDP gallery                                                        */
   /* ------------------------------------------------------------------ */
   function initGallery() {
@@ -287,6 +321,10 @@
         toast("Please add your name and phone number");
         return;
       }
+      if (!validEmail(fd.get("email"))) {
+        toast("That email doesn't look right — please check it");
+        return;
+      }
       var t = checkoutTotals(cart);
       var payload = {
         first_name: fd.get("first_name") || "",
@@ -304,6 +342,7 @@
         best_time: fd.get("best_time") || "",
         payment_method: fd.get("payment_method") || "Bank Transfer",
         notes: fd.get("notes") || "",
+        website: fd.get("website") || "",
         items: cart,
         total: Math.round(t.total * 100) / 100
       };
@@ -343,6 +382,10 @@
       e.preventDefault();
       var fd = new FormData(form);
       if (!fd.get("first_name")) { toast("Please add your first name"); return; }
+      if (!validEmail(fd.get("email"))) {
+        toast("That email doesn't look right — please check it");
+        return;
+      }
       var payload = {
         first_name: fd.get("first_name") || "",
         last_name: fd.get("last_name") || "",
@@ -350,7 +393,8 @@
         email: fd.get("email") || "",
         service: fd.get("service") || service,
         product_interest: fd.get("product_interest") || "",
-        details: fd.get("details") || ""
+        details: fd.get("details") || "",
+        website: fd.get("website") || ""
       };
       var btn = form.querySelector('button[type="submit"]');
       var orig = btn.textContent;
@@ -423,6 +467,7 @@
   /*  Boot                                                                */
   /* ------------------------------------------------------------------ */
   renderCartUI();
+  initChipSlider();
   initListing();
   initGallery();
   initCheckout();

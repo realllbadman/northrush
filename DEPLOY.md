@@ -8,6 +8,8 @@ sudo mkdir -p /srv/northrush && sudo chown $USER /srv/northrush
 git clone <your-repo> /srv/northrush && cd /srv/northrush
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env && nano .env   # real SMTP creds, admin password, business info
+                                    # set SITE_URL=https://yourdomain.com for
+                                    # correct canonical/OG tags + sitemap
 ```
 
 ## 2. systemd service
@@ -73,7 +75,24 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d yourdomain.com
 ```
 
-## 5. Updating
+## 5. Backups
+
+```bash
+sudo crontab -e
+# nightly at 03:15
+15 3 * * * /srv/northrush/scripts/backup.sh >> /var/log/northrush-backup.log 2>&1
+```
+
+Snapshots land in `/srv/northrush/backups/` (override with `BACKUP_DIR`) and
+are pruned after `KEEP_DAYS` (default 14). Copy them off the box — a backup on
+the same disk is not a backup. Restore with:
+
+```bash
+gunzip -c backups/northrush-YYYYmmdd-HHMMSS.db.gz > northrush.db
+sudo systemctl restart northrush
+```
+
+## 6. Updating
 
 ```bash
 cd /srv/northrush && git pull

@@ -21,6 +21,9 @@
           {% if BUSINESS.phone %}
           <li><span>Phone</span><a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a></li>
           {% endif %}
+          {% if BUSINESS.whatsapp %}
+          <li><span>WhatsApp</span><a href="https://wa.me/{{ BUSINESS.whatsapp }}" target="_blank" rel="noopener">Message us on WhatsApp</a></li>
+          {% endif %}
           {% if BUSINESS.email %}
           <li><span>Email</span><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>
           {% endif %}
@@ -64,6 +67,9 @@
         <label>Message *
           <textarea name="details" rows="5" required></textarea>
         </label>
+        <div class="hp-field" aria-hidden="true">
+          <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
         <button class="btn btn--primary btn--lg btn--block" type="submit">Send Message</button>
       </form>
 

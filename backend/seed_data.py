@@ -1,4 +1,4 @@
-"""Catalog seed data for Prestige Outdoors Supply.
+"""Catalog seed data for NorthRush Outdoors.
 
 Every product is a self-contained dict. ``image`` is either a bare filename
 (served from static/images/) or a full http(s) URL. Edit a product here and

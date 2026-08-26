@@ -403,29 +403,86 @@ h3 { font-size: 1.1rem; }
 }
 
 /* ---------- Chip slider ---------- */
-.chip-slider-band { background: var(--card); border-block: 1px solid var(--border); }
+.chip-slider-band {
+  background: var(--card);
+  border-block: 1px solid var(--border);
+  box-shadow: inset 0 4px 10px -8px rgba(22, 36, 29, 0.18);
+  padding: 1.1rem 0 1.3rem;
+}
+.chip-slider-band__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+.chip-slider-band__label {
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber-dk);
+}
+.chip-slider-band__arrows { display: flex; gap: 0.45rem; }
+.chip-arrow {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: #fff;
+  border: none;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
+}
+.chip-arrow svg { width: 17px; height: 17px; }
+.chip-arrow:hover:not([disabled]) { background: var(--forest-dk); }
+.chip-arrow:active:not([disabled]) { transform: scale(0.94); }
+.chip-arrow[disabled] { opacity: 0.3; cursor: default; }
+
+/* Fade masks hint that more chips are off-screen */
+.chip-slider-wrap { position: relative; }
+.chip-slider-wrap::before,
+.chip-slider-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.chip-slider-wrap::before { left: 0; background: linear-gradient(90deg, var(--card), transparent); }
+.chip-slider-wrap::after { right: 0; background: linear-gradient(-90deg, var(--card), transparent); }
+.chip-slider-wrap.can-left::before { opacity: 1; }
+.chip-slider-wrap.can-right::after { opacity: 1; }
+
 .chip-slider {
   display: flex;
   gap: 0.55rem;
   overflow-x: auto;
-  padding: 0.85rem 0;
+  padding: 0.15rem 0;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 .chip-slider::-webkit-scrollbar { display: none; }
 .chip-slider__chip {
   flex: none;
   font-family: var(--font-head);
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--ink);
   background: var(--canvas);
-  border: 1px solid var(--border);
-  padding: 0.45rem 1.05rem;
+  border: 1.5px solid var(--border);
+  padding: 0.6rem 1.25rem;
   border-radius: var(--radius-pill);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .chip-slider__chip:hover { background: var(--forest); border-color: var(--forest); color: #fff; }
-.chip-slider__chip--blind { background: rgba(31, 77, 58, 0.08); border-color: rgba(31, 77, 58, 0.22); color: var(--forest); }
+.chip-slider__chip--blind { background: rgba(31, 77, 58, 0.08); border-color: rgba(31, 77, 58, 0.28); color: var(--forest); }
 
 /* ---------- Sections ---------- */
 .section { padding: var(--space-6) 0; }
@@ -1047,6 +1104,53 @@ h3 { font-size: 1.1rem; }
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- Legal prose ---------- */
+.legal-prose { max-width: 46rem; font-size: 0.97rem; line-height: 1.75; }
+.legal-prose h2 {
+  font-size: 1.15rem;
+  margin: 2rem 0 0.6rem;
+  padding-top: 0.2rem;
+  color: var(--forest);
+}
+.legal-prose p { margin-bottom: 0.9rem; color: #33413a; }
+.legal-prose ul { margin: 0 0 1.1rem; display: grid; gap: 0.45rem; }
+.legal-prose li {
+  position: relative;
+  padding-left: 1.1rem;
+  color: #33413a;
+}
+.legal-prose li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.legal-prose strong { color: var(--ink); }
+.legal-prose code {
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.88em;
+}
+.legal-prose hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0 1.2rem; }
+.legal-prose__fine { font-size: 0.88rem; color: var(--muted); }
+
+/* ---------- Honeypot (spam trap — must never be visible) ---------- */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ---------- Toast ---------- */

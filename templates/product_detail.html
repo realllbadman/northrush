@@ -3,6 +3,16 @@
 
 {% block title %}{{ product.name }} — {{ BUSINESS.name }}{% endblock %}
 {% block meta_description %}{{ product.description | truncate(150) }}{% endblock %}
+{% block social_meta %}
+  <meta property="og:site_name" content="{{ BUSINESS.name }}">
+  <meta property="og:type" content="product">
+  <meta property="og:title" content="{{ product.name }} — ${{ '{:,.0f}'.format(product.price) }}">
+  <meta property="og:description" content="{{ product.description | truncate(150) }}">
+  <meta property="og:image" content="{{ site_origin(request) }}{{ img_url(product.image) }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ product.name }}">
+  <meta name="twitter:image" content="{{ site_origin(request) }}{{ img_url(product.image) }}">
+{% endblock %}
 
 {% block content %}
 <section class="pdp">
@@ -19,14 +29,14 @@
       <!-- Gallery -->
       <div class="pdp__gallery reveal">
         <div class="pdp__stage {% if img_is_portrait(product.image) %}pdp__stage--tall{% endif %}" id="pdp-stage">
-          <img id="pdp-main-img" src="{{ img_url(product.image) }}" alt="{{ product.name }}"
+          <img id="pdp-main-img" src="{{ img_url(product.image) }}" alt="{{ product.name }}"{{ img_size_attrs(product.image) }}
                onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
         </div>
         {% if product.images and product.images | length > 1 %}
         <div class="pdp__thumbs">
           {% for im in product.images %}
           <button class="pdp__thumb {% if loop.first %}is-active{% endif %}" data-full="{{ img_url(im) }}" aria-label="Photo {{ loop.index }}">
-            <img src="{{ img_url(im) }}" alt="" loading="lazy"
+            <img src="{{ img_url(im) }}" alt="" loading="lazy" decoding="async"{{ img_size_attrs(im) }}
                  onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
           </button>
           {% endfor %}
