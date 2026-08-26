@@ -1,0 +1,44 @@
+{% extends "legal_base.html" %}
+{% block title %}Shipping & Returns — {{ BUSINESS.name }}{% endblock %}
+{% block legal_title %}Shipping &amp; Returns{% endblock %}
+{% block legal_body %}
+<p>Blinds are large freight items, so the numbers on this site are estimates until we confirm them with you. Nothing is charged before that conversation.</p>
+
+<h2>Domestic shipping</h2>
+<ul>
+  <li><strong>Free</strong> on orders over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }}.</li>
+  <li><strong>Flat ${{ BUSINESS.flat_shipping }}</strong> on orders under that.</li>
+  <li>We ship to all {{ num_states }} states.</li>
+</ul>
+
+<h2>International freight</h2>
+<p>Freight is quoted by region at checkout as a starting estimate:</p>
+<ul>
+  {% for region, fee in FREIGHT_REGIONS if fee > 0 %}
+  <li>{{ region }} — from ${{ fee }}</li>
+  {% endfor %}
+</ul>
+<p>Final international freight depends on size, weight and destination, and we confirm it with you in writing before payment. Any customs duties or import taxes are the buyer's responsibility.</p>
+
+<h2>Lead times</h2>
+<p>In-stock items typically ship within 5–10 business days. Tower packages and made-to-order blinds take longer; we give you a date before you pay. If a lead time changes, we tell you.</p>
+
+<h2>Delivery</h2>
+<p>Large blinds ship by freight carrier to a kerbside or yard drop. Tell us in your order notes if the access is tight, if a semi can't turn in, or if there's a gate code — it saves a failed delivery.</p>
+<p>Inspect your delivery before signing. If anything arrived damaged, note it on the carrier's paperwork and photograph it before unloading. That paperwork is what lets us make a claim on your behalf.</p>
+
+<h2>Returns</h2>
+<ul>
+  <li>Contact us within <strong>30 days</strong> of delivery to start a return.</li>
+  <li>Items must be unused, in their original packaging and in resaleable condition.</li>
+  <li>Return freight on large items is the buyer's responsibility unless the item arrived damaged or we sent the wrong thing.</li>
+  <li>Refunds are issued once the item is back with us and inspected.</li>
+  <li>Made-to-order and custom blinds cannot be returned unless faulty.</li>
+</ul>
+
+<h2>Damaged or faulty items</h2>
+<p>Tell us straight away with photographs. We will repair, replace or refund. Manufacturer warranties pass through to you and we help you claim on them.</p>
+
+<h2>Cancellations</h2>
+<p>Because an order on this site is a request rather than a payment, you can cancel any time before you pay, at no cost. After payment, contact us — if the item hasn't shipped we can usually cancel in full.</p>
+{% endblock %}

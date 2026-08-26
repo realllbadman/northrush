@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found — {{ BUSINESS.name }}{% endblock %}
+{% block meta_description %}That page doesn't exist. Browse deer blinds, stands and hunting gear at {{ BUSINESS.name }}.{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="empty-state" style="max-width:38rem;margin-inline:auto;text-align:center;">
+      <span class="section__eyebrow">Error 404</span>
+      <h1>This trail doesn't lead anywhere</h1>
+      <p style="margin:1rem 0 1.6rem;">The page you're after has moved or never existed. Nothing's broken on your end — let's get you back to the good stuff.</p>
+      <div class="hero__ctas" style="justify-content:center;">
+        <a class="btn btn--primary btn--lg" href="/products?category=deer-blinds-stands">Shop Blinds &amp; Stands</a>
+        <a class="btn btn--outline btn--lg" href="/">Back to home</a>
+      </div>
+      <p style="margin-top:1.8rem;font-size:0.9rem;color:var(--muted);">
+        Looking for something specific? <a href="/contact">Ask us</a>{% if BUSINESS.phone %} or call <a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a>{% endif %}.
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

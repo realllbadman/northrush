@@ -1,0 +1,33 @@
+{% extends "legal_base.html" %}
+{% block title %}Terms of Sale — {{ BUSINESS.name }}{% endblock %}
+{% block legal_title %}Terms of Sale{% endblock %}
+{% block legal_body %}
+<p>These terms cover buying from {{ BUSINESS.name }} through this website.</p>
+
+<h2>Orders are requests, not purchases</h2>
+<p>Submitting the checkout form places an <strong>order request</strong>. It is not a completed sale and no money changes hands at that point. We review it, confirm stock and freight, and contact you. A contract exists only once we have both confirmed the order and you have paid.</p>
+
+<h2>Pricing</h2>
+<p>Prices are in US dollars and we try hard to keep them accurate. If a price, specification or availability turns out to be wrong, we will tell you before taking payment and you are free to walk away. Totals shown at checkout exclude any applicable sales tax, which we confirm with your final quote.</p>
+
+<h2>Payment</h2>
+<p>We take payment by bank transfer, Zelle or PayPal, arranged directly with you after we confirm your order. <strong>We never ask for card details through this website</strong>, and we will never email you asking you to change payment details mid-order. If you receive a message like that, call us on the number on this site before acting on it.</p>
+
+<h2>Financing</h2>
+<p>Financing is available on items over ${{ '{:,.0f}'.format(financing_min) }}: ${{ financing_down }} down, with the balance spread over {{ financing_months }} months. The monthly figures shown on this site are estimates for planning. Actual terms are agreed in writing before anything is signed, and financing is subject to approval.</p>
+
+<h2>Delivery and returns</h2>
+<p>See <a href="/shipping-returns">Shipping &amp; Returns</a>, which forms part of these terms.</p>
+
+<h2>Product information</h2>
+<p>Photographs are representative. Dimensions, colours and hardware can vary between production runs. If an exact specification matters for your build, ask us before ordering and we'll confirm it.</p>
+
+<h2>Safe use</h2>
+<p>Elevated blinds, tower stands, ladder stands and climbing stands carry a real risk of serious injury. Follow the manufacturer's instructions, use a full-body safety harness with any elevated stand, and check your setup before every season. You are responsible for safe installation and use, and for complying with hunting laws where you hunt.</p>
+
+<h2>Liability</h2>
+<p>Nothing here limits liability we cannot limit by law. Beyond that, our liability for any order is limited to the amount you paid for the item concerned.</p>
+
+<h2>Governing law</h2>
+<p>These terms are governed by the laws of the state in which {{ BUSINESS.name }} operates.</p>
+{% endblock %}
