@@ -6,7 +6,7 @@
          data-name="{{ p.name | lower }} {{ p.brand | lower }}">
   {% if p.badge %}<span class="card__badge card__badge--{{ p.badge | lower | replace(' ', '-') }}">{{ p.badge }}</span>{% endif %}
   <a class="card__imgbox {% if img_is_portrait(p.image) %}card__imgbox--tall{% endif %}" href="/products/{{ p.slug }}" aria-label="{{ p.name }}">
-    <img src="{{ img_url(p.image) }}" alt="{{ p.name }}" loading="lazy"
+    <img src="{{ img_url(p.image) }}" alt="{{ p.name }}" loading="lazy" decoding="async"{{ img_size_attrs(p.image) }}
          onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
   </a>
   <div class="card__body">
