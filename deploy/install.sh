@@ -31,7 +31,11 @@ VHOST_LINK=/etc/nginx/sites-enabled/${APP}
 CRON=/etc/cron.d/${APP}-backup
 BACKUP_LOG=/var/log/${APP}-backup.log
 DEPLOY_KEY=/root/.ssh/${APP}_deploy
-MARKER="# managed-by: ${APP} deploy (deploy/install.sh)"
+# Shared prefix only — deliberately NOT the full header. enable-ssl.sh
+# replaces this vhost with one headed "(deploy/enable-ssl.sh)", so matching the
+# longer install.sh-specific string makes the script stop recognising its own
+# file and refuse every redeploy after SSL is enabled.
+MARKER="# managed-by: ${APP} deploy"
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
