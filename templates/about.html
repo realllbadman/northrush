@@ -30,7 +30,7 @@
         </div>
         <div class="value-card reveal">
           <h3>A person answers</h3>
-          <p>Call {{ BUSINESS.phone or 'us' }} during {{ BUSINESS.hours }} and you'll get someone who has hunted out of the blinds we sell.</p>
+          <p>Message us on WhatsApp{% if BUSINESS.phone %} at {{ BUSINESS.phone }}{% endif %} during {{ BUSINESS.hours }} and you'll get someone who has hunted out of the blinds we sell. We answer in writing — it's easier to send photos of your setup that way.</p>
         </div>
       </div>
 

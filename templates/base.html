@@ -1,3 +1,4 @@
+{% from "_wa.html" import wa_link, wa_note, wa_href %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,9 +34,9 @@
       <span>Financing available</span>
       <span class="promo-sep" aria-hidden="true">·</span>
       <span>Ships to all 50 states</span>
-      {% if BUSINESS.phone %}
+      {% if BUSINESS.whatsapp %}
       <span class="promo-sep" aria-hidden="true">·</span>
-      <a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a>
+      {{ wa_link(BUSINESS) }}
       {% endif %}
     </div>
   </div>
@@ -178,8 +179,10 @@
         </ul>
         <h3 class="site-footer__contact-h">Get in touch</h3>
         <ul class="site-footer__contact">
-          {% if BUSINESS.phone %}<li><a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a></li>{% endif %}
-          {% if BUSINESS.whatsapp %}<li><a href="https://wa.me/{{ BUSINESS.whatsapp }}" target="_blank" rel="noopener">WhatsApp us</a></li>{% endif %}
+          {% if BUSINESS.whatsapp %}
+          <li>{{ wa_link(BUSINESS) }}</li>
+          <li>{{ wa_note() }}</li>
+          {% endif %}
           {% if BUSINESS.email %}<li><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>{% endif %}
           {% if BUSINESS.address %}<li>{{ BUSINESS.address }}</li>{% endif %}
           <li>{{ BUSINESS.hours }}</li>

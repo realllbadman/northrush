@@ -1106,6 +1106,32 @@ h3 { font-size: 1.1rem; }
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* ---------- WhatsApp contact ---------- */
+/* The business number takes messages only, so it is never a tel: link. The
+   glyph keeps its brand green for instant recognition; the text inherits
+   whatever context it sits in. */
+.wa-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.wa-icon { color: #25d366; flex: none; }
+.wa-link:hover .wa-icon { color: #1da851; }
+.wa-note {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: normal;
+}
+.promo-strip .wa-link { color: var(--amber); }
+.site-footer .wa-link { color: #c9d6cd; }
+.site-footer .wa-link:hover { color: var(--amber); }
+.site-footer .wa-note { color: rgba(255, 255, 255, 0.45); }
+.contact-info__wa { display: flex; flex-direction: column; gap: 0.2rem; }
+
 /* ---------- Legal prose ---------- */
 .legal-prose { max-width: 46rem; font-size: 0.97rem; line-height: 1.75; }
 .legal-prose h2 {

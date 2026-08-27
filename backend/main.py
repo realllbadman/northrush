@@ -1,5 +1,6 @@
 """NorthRush Outdoors — FastAPI app: lifespan seeding, Jinja env, page routes."""
 import os
+import re
 import struct
 from html import escape
 from contextlib import asynccontextmanager
@@ -32,7 +33,7 @@ from backend.seed_data import (  # noqa: E402
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "6"  # bump on every CSS/JS change
+ASSET_VERSION = "7"  # bump on every CSS/JS change
 
 # Smartsupp live chat. Public site key — blank it to disable the widget
 # (kept out of dev/test that way).
@@ -50,7 +51,10 @@ BUSINESS = {
     "name": os.getenv("BUSINESS_NAME", "NorthRush Outdoors"),
     "email": os.getenv("BUSINESS_EMAIL", os.getenv("OWNER_EMAIL", "")),
     "phone": os.getenv("OWNER_PHONE", ""),
-    "whatsapp": os.getenv("BUSINESS_WHATSAPP", "").replace("+", "").replace(" ", ""),
+    # The business line is WhatsApp-only. Digits only for wa.me; falls back to
+    # OWNER_PHONE so a single configured number is enough.
+    "whatsapp": re.sub(r"\D", "",
+                       os.getenv("BUSINESS_WHATSAPP", "") or os.getenv("OWNER_PHONE", "")),
     "address": os.getenv("BUSINESS_ADDRESS", ""),
     "hours": os.getenv("BUSINESS_HOURS", "Mon–Sat 8am–6pm CT"),
     "free_ship_threshold": 1500,

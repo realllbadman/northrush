@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_wa.html" import wa_link %}
 
 {% block title %}Page not found — {{ BUSINESS.name }}{% endblock %}
 {% block meta_description %}That page doesn't exist. Browse deer blinds, stands and hunting gear at {{ BUSINESS.name }}.{% endblock %}
@@ -15,7 +16,7 @@
         <a class="btn btn--outline btn--lg" href="/">Back to home</a>
       </div>
       <p style="margin-top:1.8rem;font-size:0.9rem;color:var(--muted);">
-        Looking for something specific? <a href="/contact">Ask us</a>{% if BUSINESS.phone %} or call <a href="tel:{{ BUSINESS.phone | replace(' ', '') }}">{{ BUSINESS.phone }}</a>{% endif %}.
+        Looking for something specific? <a href="/contact">Ask us</a>{% if BUSINESS.whatsapp %} or {{ wa_link(BUSINESS, show_number=False, label='message us on WhatsApp') }}{% endif %}.
       </p>
     </div>
   </div>

@@ -167,7 +167,7 @@ def _divider() -> str:
 def _shell(kicker, headline, hero_label, hero_value, sections_html, preheader,
            footer_note="Automated notification from your storefront. Reply to this email to answer the customer directly.") -> str:
     """Wrap content in the branded header/footer chrome."""
-    phone_line = f' &middot; {_esc(BUSINESS_PHONE)}' if BUSINESS_PHONE else ""
+    phone_line = f' &middot; WhatsApp {_esc(BUSINESS_PHONE)}' if BUSINESS_PHONE else ""
     return f"""<!doctype html>
 <html>
 <head>
@@ -465,7 +465,7 @@ def format_customer_inquiry(inq) -> str:
               "(Final freight is confirmed before any payment.)", ""]
     if inq.address:
         lines += [f"Delivering to: {inq.address}, {inq.city}, {inq.state} {inq.zip}", ""]
-    lines += [f"Questions? Call {BUSINESS_PHONE}" if BUSINESS_PHONE else "",
+    lines += [f"Questions? Message us on WhatsApp: {BUSINESS_PHONE} (messages only)" if BUSINESS_PHONE else "",
               f"{BUSINESS_NAME} · {BUSINESS_HOURS}"]
     return "\n".join(l for l in lines if l)
 
@@ -549,7 +549,7 @@ def format_customer_booking(bk) -> str:
         f"  {bk.details or '(no details)'}",
         "",
         f"Product of interest: {bk.product_interest}" if bk.product_interest else "",
-        f"Need us sooner? Call {BUSINESS_PHONE}" if BUSINESS_PHONE else "",
+        f"Need us sooner? Message us on WhatsApp: {BUSINESS_PHONE} (messages only)" if BUSINESS_PHONE else "",
         f"{BUSINESS_NAME} · {BUSINESS_HOURS}",
     ] if l)
 
