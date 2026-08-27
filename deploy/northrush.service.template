@@ -1,0 +1,46 @@
+# managed-by: northrush deploy (deploy/install.sh) -- do not edit by hand
+[Unit]
+Description=NorthRush Outdoors storefront (FastAPI)
+Documentation=https://northrushhunting.com
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Type=simple, not notify: gunicorn's sd_notify support varies by build and a
+# missing READY=1 makes systemd hang the unit for 90s then kill it. The
+# deploy script polls /health instead, which is unambiguous.
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=@APP_DIR@
+
+# No EnvironmentFile= on purpose. The app loads .env itself via python-dotenv,
+# walking up from backend/. systemd's parser is stricter and chokes on values
+# containing spaces or '#' -- BUSINESS_HOURS and SMTP_PASSWORD both contain
+# spaces -- failing with an error that points at systemd, not the real line.
+ExecStart=@APP_DIR@/.venv/bin/gunicorn backend.main:app \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers 2 \
+    --bind 127.0.0.1:@PORT@ \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    --access-logfile - \
+    --error-logfile -
+
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=@APP@
+
+# Modest hardening. ReadWritePaths is required: SQLite creates -wal/-shm
+# siblings and the nightly backup writes into backups/.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=@APP_DIR@
+
+[Install]
+WantedBy=multi-user.target

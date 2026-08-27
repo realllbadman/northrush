@@ -1,0 +1,81 @@
+# managed-by: northrush deploy (deploy/enable-ssl.sh) -- do not edit by hand
+
+# ─── port 80: ACME first, then redirect everything else ──────────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name @DOMAIN@ @WWW@;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+        default_type "text/plain";
+    }
+
+    location / { return 301 https://@DOMAIN@$request_uri; }
+}
+
+# ─── port 443: www -> apex, so pages have one canonical address ──────────────
+server {
+    # nginx 1.24: `http2 on;` is a 1.25.1+ directive and fails `nginx -t`.
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name @WWW@;
+
+    ssl_certificate     /etc/letsencrypt/live/@DOMAIN@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@DOMAIN@/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    # Zone name is app-specific: a duplicate name across vhosts on a shared
+    # box is a hard nginx error.
+    ssl_session_cache shared:northrush_ssl:10m;
+    ssl_session_timeout 1d;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+        default_type "text/plain";
+    }
+
+    location / { return 301 https://@DOMAIN@$request_uri; }
+}
+
+# ─── port 443: the site ──────────────────────────────────────────────────────
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name @DOMAIN@;
+
+    ssl_certificate     /etc/letsencrypt/live/@DOMAIN@/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/@DOMAIN@/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:northrush_ssl_main:10m;
+    ssl_session_timeout 1d;
+
+    # Renewal follows the 80->443 redirect, so the challenge must resolve
+    # here too or renewal fails silently in ~60 days.
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+        default_type "text/plain";
+    }
+
+    client_max_body_size 8m;
+
+    location /static/ {
+        alias @APP_DIR@/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:@PORT@;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        # The app emits HSTS itself when it sees this is https -- so it is set
+        # once, here, and not duplicated with an add_header.
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 60s;
+    }
+}
