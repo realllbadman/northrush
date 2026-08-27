@@ -52,18 +52,51 @@ cannot read; the app would then silently fall back to code defaults).
 REPO_URL=git@github.com:you/northrush.git ./install.sh
 ```
 
-Ends with the app answering on `127.0.0.1:8007` and `http://northrushhunting.com/`
-serving over plain HTTP.
+Ends with the app answering on `127.0.0.1:8007` and the vhost installed.
+DNS still points at the registrar at this stage, so verify by faking the
+resolution rather than waiting:
+
+```bash
+curl --resolve northrushhunting.com:80:${SERVER_IP} \
+     -sS -o /dev/null -w '%{http_code}\n' http://northrushhunting.com/
+```
+
+Expect `200`. If you get a **used-car dealership**, our vhost did not match and
+the request fell through to the box's default server block — check
+`nginx -T | grep -A2 northrushhunting`.
 
 ### 4. Point DNS at the box
 
-| Type | Name  | Value             |
-| ---- | ----- | ----------------- |
-| A    | `@`   | `${SERVER_IP}`  |
-| A    | `www` | `${SERVER_IP}`  |
+**Deploy first, then flip DNS** — in that order. The default server block on
+this box belongs to another site, so between DNS propagating and the app being
+installed, visitors would be served a used-car dealership.
 
-Wait until both resolve — `enable-ssl.sh` checks this and refuses to continue
-otherwise, because a wrong answer burns one of five hourly validation attempts.
+The domain is on Namecheap BasicDNS (`dns1/dns2.registrar-servers.com`). In
+**Domain List → Manage → Advanced DNS**:
+
+| Action     | Type  | Host  | Value                      |
+| ---------- | ----- | ----- | -------------------------- |
+| **delete** | A     | `@`   | `192.64.119.83` (parking)  |
+| **delete** | CNAME | `www` | `parkingpage.namecheap.com`|
+| **add**    | A     | `@`   | `${SERVER_IP}`           |
+| **add**    | A     | `www` | `${SERVER_IP}`           |
+
+Also remove any **URL Redirect Record** Namecheap added for parking.
+
+**Leave the MX records and the SPF TXT alone.** The five
+`eforward*.registrar-servers.com` MX entries and
+`v=spf1 include:spf.efwd.registrar-servers.com ~all` are Namecheap's email
+forwarding for `@northrushhunting.com`. They are unrelated to the website and
+deleting them breaks mail to the domain.
+
+Wait until both hostnames resolve to the VPS:
+
+```bash
+dig +short northrushhunting.com www.northrushhunting.com
+```
+
+`enable-ssl.sh` checks this itself and refuses to continue otherwise, because a
+wrong answer burns one of five hourly validation attempts.
 
 ### 5. HTTPS
 
