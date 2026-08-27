@@ -414,8 +414,17 @@ def format_booking_html(bk) -> str:
 #  Customer-facing confirmations
 # --------------------------------------------------------------------------- #
 
-CUSTOMER_FOOTER = ("You're receiving this because you submitted a request at "
-                   "northrush.com. Reply to this email and it reaches us directly.")
+# Derived from SITE_URL so the domain can never drift out of sync with the
+# deployed site; falls back to the business name when SITE_URL is unset (dev).
+_SITE = os.getenv("SITE_URL", "").rstrip("/")
+SITE_DOMAIN = _SITE.split("//")[-1].split("/")[0] if _SITE else ""
+CUSTOMER_FOOTER = (
+    f"You're receiving this because you submitted a request at {SITE_DOMAIN}. "
+    "Reply to this email and it reaches us directly."
+    if SITE_DOMAIN else
+    f"You're receiving this because you submitted a request to {BUSINESS_NAME}. "
+    "Reply to this email and it reaches us directly."
+)
 
 
 def _steps(items) -> str:

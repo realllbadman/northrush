@@ -1,5 +1,26 @@
 # Deploying NorthRush Outdoors
 
+## 0. DNS
+
+Point the domain at the server before running certbot — it validates over
+HTTP and will fail if DNS has not propagated.
+
+| Type | Name | Value |
+| --- | --- | --- |
+| A | `@` | your server's IPv4 |
+| A | `www` | your server's IPv4 |
+| AAAA | `@` | your server's IPv6 (if it has one) |
+
+Check it resolves before continuing:
+
+```bash
+dig +short northrushhunting.com
+dig +short www.northrushhunting.com
+```
+
+Both must return your server IP. Propagation is usually minutes, but allow
+up to a few hours.
+
 ## 1. Server prep (Ubuntu)
 
 ```bash
@@ -8,8 +29,8 @@ sudo mkdir -p /srv/northrush && sudo chown $USER /srv/northrush
 git clone <your-repo> /srv/northrush && cd /srv/northrush
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env && nano .env   # real SMTP creds, admin password, business info
-                                    # set SITE_URL=https://yourdomain.com for
-                                    # correct canonical/OG tags + sitemap
+                                    # set SITE_URL=https://northrushhunting.com
+                                    # (canonical/OG tags, sitemap, email footer)
 ```
 
 ## 2. systemd service
@@ -45,9 +66,19 @@ curl -s localhost:8007/health   # → {"ok":true}
 `/etc/nginx/sites-available/northrush`:
 
 ```nginx
+# Redirect www -> apex so pages have one canonical address
 server {
     listen 80;
-    server_name yourdomain.com;
+    server_name www.northrushhunting.com;
+    return 301 http://northrushhunting.com$request_uri;
+}
+
+server {
+    listen 80;
+    server_name northrushhunting.com;
+
+    # Freight photos are large; allow a sensible body size and long reads
+    client_max_body_size 8m;
 
     location /static/ {
         alias /srv/northrush/static/;
@@ -72,7 +103,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ## 4. HTTPS
 
 ```bash
-sudo certbot --nginx -d yourdomain.com
+sudo certbot --nginx -d northrushhunting.com -d www.northrushhunting.com
 ```
 
 ## 5. Backups
