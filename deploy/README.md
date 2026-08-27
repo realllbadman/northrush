@@ -19,6 +19,15 @@ configuration, and it never reloads nginx until `nginx -t` passes.
 
 Everything runs **as root on the server**, except the one `scp`.
 
+First, on your laptop, set the target. The address is kept out of this repo on
+purpose — the repo is public, and publishing the IP of a box that accepts root
+SSH just hands scanners a confirmed target:
+
+```bash
+cp deploy/server.local.env.example deploy/server.local.env   # then edit it
+source deploy/server.local.env                               # exports SERVER_IP
+```
+
 ### 1. First run — generates the deploy key, then stops
 
 ```bash
@@ -78,8 +87,8 @@ The domain is on Namecheap BasicDNS (`dns1/dns2.registrar-servers.com`). In
 | ---------- | ----- | ----- | -------------------------- |
 | **delete** | A     | `@`   | `192.64.119.83` (parking)  |
 | **delete** | CNAME | `www` | `parkingpage.namecheap.com`|
-| **add**    | A     | `@`   | `${SERVER_IP}`           |
-| **add**    | A     | `www` | `${SERVER_IP}`           |
+| **add**    | A     | `@`   | your server IP           |
+| **add**    | A     | `www` | your server IP           |
 
 Also remove any **URL Redirect Record** Namecheap added for parking.
 
