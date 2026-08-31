@@ -103,3 +103,14 @@
   </div>
 </section>
 {% endblock %}
+
+{% block scripts %}
+{% if GOOGLE_ADS_SEND_TO %}
+<script>
+  /* Google Ads purchase conversion. The success state on this page is a JS
+     transition, not a separate URL, so main.js fires the event from the
+     checkout response — with the real order total and order number. */
+  window.NORTHRUSH_ADS = { send_to: "{{ GOOGLE_ADS_SEND_TO }}", currency: "USD" };
+</script>
+{% endif %}
+{% endblock %}

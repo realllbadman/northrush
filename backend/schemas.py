@@ -46,3 +46,4 @@ class BookingCreate(BaseModel):
 
 class MessageOut(BaseModel):
     message: str
+    id: Optional[int] = None    # order number — used as the ad conversion's transaction_id

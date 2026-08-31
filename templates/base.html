@@ -4,6 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% if GOOGLE_ADS_ID %}
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ GOOGLE_ADS_ID }}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ GOOGLE_ADS_ID }}');
+  </script>
+  {% endif %}
   <title>{% block title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.{% endblock %}">
   {% block social_meta %}

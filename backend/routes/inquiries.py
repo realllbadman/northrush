@@ -28,7 +28,8 @@ async def create_inquiry(
 ):
     enforce_rate_limit(request)
     if is_bot(payload, request):
-        # Same reply a human gets — never confirm the trap to a bot.
+        # Same reply a human gets — never confirm the trap to a bot. No id is
+        # returned, so a bot submission can never fire an ad conversion.
         return {"message": "Order received! We'll contact you shortly to confirm and arrange payment."}
 
     inq = Inquiry(
@@ -71,4 +72,7 @@ async def create_inquiry(
             reply_to=OWNER_EMAIL,
             bcc=OWNER_EMAIL,
         )
-    return {"message": "Order received! We'll contact you shortly to confirm and arrange payment."}
+    return {
+        "message": "Order received! We'll contact you shortly to confirm and arrange payment.",
+        "id": inq.id,
+    }

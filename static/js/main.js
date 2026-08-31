@@ -252,6 +252,42 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Google Ads purchase conversion                                     */
+  /*                                                                     */
+  /*  There is no separate confirmation URL — checkout success is a state */
+  /*  change on this page — so the event fires from the POST response.    */
+  /*  Order ids already fired are remembered, so a refresh, a back/forward */
+  /*  restore, or a double-submit can never count the same order twice.   */
+  /* ------------------------------------------------------------------ */
+  var CONV_KEY = "northrush_conv_v1";
+
+  function convSeen() {
+    try {
+      var v = JSON.parse(localStorage.getItem(CONV_KEY) || "[]");
+      return Array.isArray(v) ? v : [];
+    } catch (e) { return []; }
+  }
+
+  function trackPurchase(orderId, value) {
+    var cfg = window.NORTHRUSH_ADS;
+    if (!cfg || !cfg.send_to) return;              // not configured — stay silent
+    if (typeof window.gtag !== "function") return; // tag absent or blocked
+    var id = String(orderId);
+    var seen = convSeen();
+    if (seen.indexOf(id) !== -1) return;           // already counted
+    try {
+      seen.push(id);
+      localStorage.setItem(CONV_KEY, JSON.stringify(seen.slice(-50)));
+    } catch (e) { /* private mode — still fire, just cannot dedupe */ }
+    window.gtag("event", "conversion", {
+      send_to: cfg.send_to,
+      value: Math.round((parseFloat(value) || 0) * 100) / 100,
+      currency: cfg.currency || "USD",
+      transaction_id: id
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  Checkout                                                           */
   /* ------------------------------------------------------------------ */
   function freightFee() {
@@ -357,6 +393,8 @@
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       }).then(function (data) {
+        // Real order value and order number, straight from the request/response.
+        trackPurchase(data.id || ("t" + Date.now()), payload.total);
         localStorage.removeItem(CART_KEY);
         renderCartUI([]);
         $("#checkout-layout").hidden = true;

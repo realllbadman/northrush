@@ -33,11 +33,21 @@ from backend.seed_data import (  # noqa: E402
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "7"  # bump on every CSS/JS change
+ASSET_VERSION = "8"  # bump on every CSS/JS change
 
 # Smartsupp live chat. Public site key — blank it to disable the widget
 # (kept out of dev/test that way).
 SMARTSUPP_KEY = os.getenv("SMARTSUPP_KEY", "")
+
+# Google Ads. GOOGLE_ADS_ID alone loads the global tag; the conversion event
+# additionally needs the label, so it stays inert until both are set. Blank
+# either one to keep dev and test traffic out of the account.
+GOOGLE_ADS_ID = os.getenv("GOOGLE_ADS_ID", "").strip()
+GOOGLE_ADS_CONVERSION_LABEL = os.getenv("GOOGLE_ADS_CONVERSION_LABEL", "").strip()
+GOOGLE_ADS_SEND_TO = (
+    f"{GOOGLE_ADS_ID}/{GOOGLE_ADS_CONVERSION_LABEL}"
+    if GOOGLE_ADS_ID and GOOGLE_ADS_CONVERSION_LABEL else ""
+)
 
 # Public origin, used for canonical/OG URLs and the sitemap. Falls back to
 # whatever host the request arrived on, so dev keeps working unset.
@@ -246,6 +256,8 @@ _env.globals.update(
     ASSET_VERSION=ASSET_VERSION,
     LEGAL_UPDATED=datetime.now().strftime("%B %-d, %Y"),
     SMARTSUPP_KEY=SMARTSUPP_KEY,
+    GOOGLE_ADS_ID=GOOGLE_ADS_ID,
+    GOOGLE_ADS_SEND_TO=GOOGLE_ADS_SEND_TO,
     current_year=datetime.now().year,
     img_url=img_url,
     img_is_portrait=img_is_portrait,
