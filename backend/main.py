@@ -1,4 +1,5 @@
 """NorthRush Outdoors — FastAPI app: lifespan seeding, Jinja env, page routes."""
+import logging
 import os
 import re
 import struct
@@ -31,6 +32,8 @@ from backend.seed_data import (  # noqa: E402
     sync_products,
 )
 
+log = logging.getLogger("northrush")
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ASSET_VERSION = "8"  # bump on every CSS/JS change
@@ -43,7 +46,28 @@ SMARTSUPP_KEY = os.getenv("SMARTSUPP_KEY", "")
 # additionally needs the label, so it stays inert until both are set. Blank
 # either one to keep dev and test traffic out of the account.
 GOOGLE_ADS_ID = os.getenv("GOOGLE_ADS_ID", "").strip()
-GOOGLE_ADS_CONVERSION_LABEL = os.getenv("GOOGLE_ADS_CONVERSION_LABEL", "").strip()
+
+
+def _clean_conversion_label(raw: str) -> str:
+    """Normalise the label, and reject Google's placeholder.
+
+    Accepts either the bare label or the whole "AW-123/AbC-D_efG" send_to
+    string, because Google's UI shows the latter and it is the easier thing to
+    copy. Google's snippet ships the literal word CONVERSION_LABEL before you
+    pick a conversion action; pasting that would build a valid-looking send_to
+    that silently records nothing, so it is treated as unset.
+    """
+    label = (raw or "").strip().strip("'\"")
+    if "/" in label:
+        label = label.rsplit("/", 1)[-1].strip()
+    if label.upper() in ("", "CONVERSION_LABEL", "AW-CONVERSION_LABEL"):
+        return ""
+    return label
+
+
+GOOGLE_ADS_CONVERSION_LABEL = _clean_conversion_label(
+    os.getenv("GOOGLE_ADS_CONVERSION_LABEL", "")
+)
 GOOGLE_ADS_SEND_TO = (
     f"{GOOGLE_ADS_ID}/{GOOGLE_ADS_CONVERSION_LABEL}"
     if GOOGLE_ADS_ID and GOOGLE_ADS_CONVERSION_LABEL else ""
@@ -203,6 +227,12 @@ async def lifespan(app: FastAPI):
                 conn.commit()
             except Exception:
                 conn.rollback()  # column already exists — fine
+    if GOOGLE_ADS_ID and not GOOGLE_ADS_SEND_TO:
+        log.warning(
+            "Google Ads: global tag active (%s) but GOOGLE_ADS_CONVERSION_LABEL "
+            "is unset or still the CONVERSION_LABEL placeholder — purchase "
+            "conversions are NOT being recorded.", GOOGLE_ADS_ID,
+        )
     db = SessionLocal()
     try:
         sync_products(db)
