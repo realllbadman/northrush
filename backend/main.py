@@ -36,7 +36,7 @@ log = logging.getLogger("northrush")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "9"  # bump on every CSS/JS change
+ASSET_VERSION = "10"  # bump on every CSS/JS change
 
 # Smartsupp live chat. Public site key — blank it to disable the widget
 # (kept out of dev/test that way).
@@ -124,6 +124,11 @@ US_STATES = [
     "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
     "Washington", "West Virginia", "Wisconsin", "Wyoming",
 ]
+
+# Accepted payment methods, in the order they appear at checkout. The first is
+# the default. Kept here so the form, the schema default and the policy copy
+# cannot drift apart.
+PAYMENT_METHODS = ["Cash App", "Apple Pay", "Chime", "Credit Card"]
 
 FINANCING_MIN_PRICE = 1500
 FINANCING_DOWN = 500
@@ -290,6 +295,7 @@ _env.globals.update(
     SLIDER_CHIPS=SLIDER_CHIPS,
     FREIGHT_REGIONS=FREIGHT_REGIONS,
     US_STATES=US_STATES,
+    PAYMENT_METHODS=PAYMENT_METHODS,
     ASSET_VERSION=ASSET_VERSION,
     FOUNDED_YEAR=FOUNDED_YEAR,
     LEGAL_UPDATED=datetime.now().strftime("%B %-d, %Y"),

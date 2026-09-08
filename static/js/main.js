@@ -376,7 +376,7 @@
         freight_region: fd.get("freight_region") || "United States",
         contact_pref: fd.get("contact_pref") || "Phone",
         best_time: fd.get("best_time") || "",
-        payment_method: fd.get("payment_method") || "Bank Transfer",
+        payment_method: fd.get("payment_method") || "Cash App",
         notes: fd.get("notes") || "",
         website: fd.get("website") || "",
         items: cart,

@@ -26,7 +26,7 @@ class InquiryCreate(BaseModel):
     freight_region: str = "United States"
     contact_pref: str = "Phone"
     best_time: str = ""
-    payment_method: str = "Bank Transfer"
+    payment_method: str = "Cash App"
     notes: str = ""
     items: List[CartItem] = []
     total: float = 0.0

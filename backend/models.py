@@ -45,7 +45,7 @@ class Inquiry(Base):
     freight_region = Column(String, default="")
     contact_pref = Column(String, default="")          # Phone / Text / Email
     best_time = Column(String, default="")
-    payment_method = Column(String, default="")        # Bank Transfer / Zelle / PayPal / Other
+    payment_method = Column(String, default="")        # see PAYMENT_METHODS in main.py
     notes = Column(Text, default="")
     items = Column(JSON, default=list)                 # cart line items
     total = Column(Float, default=0.0)

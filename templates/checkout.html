@@ -62,7 +62,7 @@
         </div>
         <label>Preferred payment method
           <select name="payment_method">
-            <option>Bank Transfer</option><option>Zelle</option><option>PayPal</option><option>Other</option>
+            {% for method in PAYMENT_METHODS %}<option>{{ method }}</option>{% endfor %}
           </select>
         </label>
         <label>Notes for us (delivery details, land access, questions…)
