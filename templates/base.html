@@ -1,4 +1,4 @@
-{% from "_wa.html" import wa_link, wa_note, wa_href %}
+{% from "_contact.html" import call_link, text_link, call_or_text %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,9 +44,9 @@
       <span>Financing available</span>
       <span class="promo-sep" aria-hidden="true">·</span>
       <span>Ships to all 50 states</span>
-      {% if BUSINESS.whatsapp %}
+      {% if BUSINESS.phone %}
       <span class="promo-sep" aria-hidden="true">·</span>
-      {{ wa_link(BUSINESS) }}
+      {{ call_link(BUSINESS) }}
       {% endif %}
     </div>
   </div>
@@ -189,9 +189,9 @@
         </ul>
         <h3 class="site-footer__contact-h">Get in touch</h3>
         <ul class="site-footer__contact">
-          {% if BUSINESS.whatsapp %}
-          <li>{{ wa_link(BUSINESS) }}</li>
-          <li>{{ wa_note() }}</li>
+          {% if BUSINESS.phone %}
+          <li>{{ call_link(BUSINESS) }}</li>
+          <li>{{ text_link(BUSINESS, show_number=True) }}</li>
           {% endif %}
           {% if BUSINESS.email %}<li><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>{% endif %}
           {% if BUSINESS.address %}<li>{{ BUSINESS.address }}</li>{% endif %}
@@ -200,7 +200,7 @@
       </div>
     </div>
     <div class="container site-footer__legal">
-      <span>&copy; {{ current_year }} {{ BUSINESS.name }}. All rights reserved.</span>
+      <span>&copy; {{ FOUNDED_YEAR }}–{{ current_year }} {{ BUSINESS.name }}. All rights reserved.</span>
       <span>Free shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }} · Financing available</span>
     </div>
   </footer>

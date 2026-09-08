@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_card.html" import product_card %}
+{% from "_contact.html" import product_contact %}
 
 {% block title %}{{ product.name }} — {{ BUSINESS.name }}{% endblock %}
 {% block meta_description %}{{ product.description | truncate(150) }}{% endblock %}
@@ -78,6 +79,13 @@
                   data-price="{{ product.price }}" data-image="{{ product.image }}">Add to Cart</button>
           <a class="btn btn--outline btn--lg" href="/contact?product={{ product.slug | urlencode }}">Request a Quote</a>
         </div>
+
+        {% if BUSINESS.phone %}
+        <div class="pdp__contact reveal">
+          {{ product_contact(BUSINESS, compact=False) }}
+          <span class="pdp__contact-note">Questions on freight, lead time or fit? Call or text — we answer during {{ BUSINESS.hours }}.</span>
+        </div>
+        {% endif %}
 
         {% if product.model_number %}
         <table class="pdp__specs reveal">

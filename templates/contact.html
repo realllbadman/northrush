@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_wa.html" import wa_link, wa_note, wa_href %}
+{% from "_contact.html" import call_link, text_link %}
 
 {% block title %}Contact — {{ BUSINESS.name }}{% endblock %}
 
@@ -19,14 +19,9 @@
       <div class="contact-info reveal">
         <h2>{{ BUSINESS.name }}</h2>
         <ul class="contact-info__list">
-          {% if BUSINESS.whatsapp %}
-          <li>
-            <span>WhatsApp</span>
-            <span class="contact-info__wa">
-              {{ wa_link(BUSINESS, text='Hi NorthRush Outdoors — I have a question about') }}
-              {{ wa_note() }}
-            </span>
-          </li>
+          {% if BUSINESS.phone %}
+          <li><span>Call</span>{{ call_link(BUSINESS) }}</li>
+          <li><span>Text</span>{{ text_link(BUSINESS, show_number=True) }}</li>
           {% endif %}
           {% if BUSINESS.email %}
           <li><span>Email</span><a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a></li>

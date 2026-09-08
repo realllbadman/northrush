@@ -14,7 +14,7 @@
 
     <div class="about-page__body">
       <div class="about-page__story reveal">
-        <p class="about-lede">NorthRush Outdoors started with one belief: a deer blind isn't a tent — it's the difference between a good season and a great one. We hand-pick blinds and stands that survive northern winters, then ship them to hunters in all {{ num_states }} states.</p>
+        <p class="about-lede">NorthRush Outdoors has been outfitting hunters since {{ FOUNDED_YEAR }}, and it started with one belief: a deer blind isn't a tent — it's the difference between a good season and a great one. We hand-pick blinds and stands that survive northern winters, then ship them to hunters in all {{ num_states }} states.</p>
         <p>We're hunters first. Every blind in our lineup — from a packable ground blind to a full insulated tower package — is a model we'd put on our own land. That's why the catalog is deep on blinds and stands ({{ total_products }} products across the whole store) and shallow on gimmicks.</p>
         <p>Ordering is old-school on purpose. You build a cart, send it in, and a real person calls you back to confirm stock, freight to your county, and payment on your terms — bank transfer, Zelle or PayPal. No card forms, no surprises on the invoice.</p>
       </div>
@@ -30,7 +30,7 @@
         </div>
         <div class="value-card reveal">
           <h3>A person answers</h3>
-          <p>Message us on WhatsApp{% if BUSINESS.phone %} at {{ BUSINESS.phone }}{% endif %} during {{ BUSINESS.hours }} and you'll get someone who has hunted out of the blinds we sell. We answer in writing — it's easier to send photos of your setup that way.</p>
+          <p>Call or text {% if BUSINESS.phone %}<a href="tel:{{ BUSINESS.phone_href }}">{{ BUSINESS.phone }}</a>{% else %}us{% endif %} during {{ BUSINESS.hours }} and you'll get someone who has hunted out of the blinds we sell. Text us photos of your setup and we'll tell you what fits.</p>
         </div>
       </div>
 

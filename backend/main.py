@@ -36,7 +36,7 @@ log = logging.getLogger("northrush")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "8"  # bump on every CSS/JS change
+ASSET_VERSION = "9"  # bump on every CSS/JS change
 
 # Smartsupp live chat. Public site key — blank it to disable the widget
 # (kept out of dev/test that way).
@@ -81,14 +81,21 @@ SITE_URL = os.getenv("SITE_URL", "").rstrip("/")
 def site_url(request: Request) -> str:
     return SITE_URL or str(request.base_url).rstrip("/")
 
+_PHONE = os.getenv("OWNER_PHONE", "").strip()
+_PHONE_HREF = ("+" if _PHONE.startswith("+") else "") + re.sub(r"\D", "", _PHONE)
+
+# The storefront presents itself as trading since this year.
+try:
+    FOUNDED_YEAR = int(os.getenv("FOUNDED_YEAR", "2019"))
+except ValueError:
+    FOUNDED_YEAR = 2019
+
 BUSINESS = {
     "name": os.getenv("BUSINESS_NAME", "NorthRush Outdoors"),
     "email": os.getenv("BUSINESS_EMAIL", os.getenv("OWNER_EMAIL", "")),
-    "phone": os.getenv("OWNER_PHONE", ""),
-    # The business line is WhatsApp-only. Digits only for wa.me; falls back to
-    # OWNER_PHONE so a single configured number is enough.
-    "whatsapp": re.sub(r"\D", "",
-                       os.getenv("BUSINESS_WHATSAPP", "") or os.getenv("OWNER_PHONE", "")),
+    "phone": _PHONE,
+    # Dial-safe form for tel: and sms: — digits only, leading + kept.
+    "phone_href": _PHONE_HREF,
     "address": os.getenv("BUSINESS_ADDRESS", ""),
     "hours": os.getenv("BUSINESS_HOURS", "Mon–Sat 8am–6pm CT"),
     "free_ship_threshold": 1500,
@@ -284,6 +291,7 @@ _env.globals.update(
     FREIGHT_REGIONS=FREIGHT_REGIONS,
     US_STATES=US_STATES,
     ASSET_VERSION=ASSET_VERSION,
+    FOUNDED_YEAR=FOUNDED_YEAR,
     LEGAL_UPDATED=datetime.now().strftime("%B %-d, %Y"),
     SMARTSUPP_KEY=SMARTSUPP_KEY,
     GOOGLE_ADS_ID=GOOGLE_ADS_ID,

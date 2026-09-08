@@ -1,3 +1,4 @@
+{% from "_contact.html" import product_contact %}
 {% macro product_card(p) %}
 <article class="card reveal"
          data-category="{{ p.category }}"
@@ -5,13 +6,15 @@
          data-price="{{ p.price }}"
          data-name="{{ p.name | lower }} {{ p.brand | lower }}">
   {% if p.badge %}<span class="card__badge card__badge--{{ p.badge | lower | replace(' ', '-') }}">{{ p.badge }}</span>{% endif %}
-  <a class="card__imgbox {% if img_is_portrait(p.image) %}card__imgbox--tall{% endif %}" href="/products/{{ p.slug }}" aria-label="{{ p.name }}">
+  <a class="card__imgbox {% if img_is_portrait(p.image) %}card__imgbox--tall{% endif %}" href="/products/{{ p.slug }}" tabindex="-1" aria-hidden="true">
     <img src="{{ img_url(p.image) }}" alt="{{ p.name }}" loading="lazy" decoding="async"{{ img_size_attrs(p.image) }}
          onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">
   </a>
   <div class="card__body">
     <span class="card__brand">{{ p.brand }}</span>
-    <h3 class="card__name"><a href="/products/{{ p.slug }}">{{ p.name }}</a></h3>
+    {# This link is stretched over the whole card by CSS, so clicking anywhere
+       on the card opens the product. Buttons and the phone links sit above it. #}
+    <h3 class="card__name"><a class="card__link" href="/products/{{ p.slug }}">{{ p.name }}</a></h3>
     {% if p.model_number %}
     <div class="card__chips">
       {% for spec in p.model_number.split('·')[:3] %}
@@ -32,6 +35,7 @@
               data-image="{{ p.image }}">Add to Cart</button>
       <a class="btn btn--ghost btn--sm" href="/products/{{ p.slug }}">Details</a>
     </div>
+    {% if BUSINESS.phone %}{{ product_contact(BUSINESS) }}{% endif %}
   </div>
 </article>
 {% endmacro %}

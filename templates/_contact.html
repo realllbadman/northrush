@@ -1,0 +1,47 @@
+{# Phone contact macros.
+
+   One number, good for both voice and SMS. Voice uses tel:, texting uses
+   sms: — a tel: link cannot open a message composer, so the two are always
+   offered as separate targets rather than one ambiguous link. #}
+
+{% macro phone_icon(size=15) -%}
+<svg class="phone-icon" viewBox="0 0 24 24" width="{{ size }}" height="{{ size }}" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.2 2.2z"/>
+</svg>
+{%- endmacro %}
+
+{% macro sms_icon(size=15) -%}
+<svg class="phone-icon" viewBox="0 0 24 24" width="{{ size }}" height="{{ size }}" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm0 4h7v2H7v-2z"/>
+</svg>
+{%- endmacro %}
+
+{# Number as a call link. #}
+{% macro call_link(BUSINESS, show_number=True, label='Call') -%}
+<a class="phone-link" href="tel:{{ BUSINESS.phone_href }}"
+   aria-label="Call {{ BUSINESS.phone }}">
+  {{ phone_icon() }}<span>{{ label }}{% if show_number %} {{ BUSINESS.phone }}{% endif %}</span>
+</a>
+{%- endmacro %}
+
+{# Number as a text-message link. #}
+{% macro text_link(BUSINESS, show_number=False, label='Text') -%}
+<a class="phone-link" href="sms:{{ BUSINESS.phone_href }}"
+   aria-label="Send a text message to {{ BUSINESS.phone }}">
+  {{ sms_icon() }}<span>{{ label }}{% if show_number %} {{ BUSINESS.phone }}{% endif %}</span>
+</a>
+{%- endmacro %}
+
+{# Compact "call or text" pair, for headers and footers. #}
+{% macro call_or_text(BUSINESS) -%}
+<span class="phone-pair">{{ call_link(BUSINESS) }}<span class="phone-pair__sep">or</span>{{ text_link(BUSINESS) }}</span>
+{%- endmacro %}
+
+{# The line that sits beside a product. Kept above the card's stretched link
+   so it stays independently clickable. #}
+{% macro product_contact(BUSINESS, compact=True) -%}
+<div class="prod-contact{% if compact %} prod-contact--compact{% endif %}">
+  <span class="prod-contact__label">Order by phone</span>
+  <span class="prod-contact__links">{{ call_link(BUSINESS) }}<span class="phone-pair__sep">or</span>{{ text_link(BUSINESS) }}</span>
+</div>
+{%- endmacro %}

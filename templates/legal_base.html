@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_wa.html" import wa_href %}
+
 
 {% block content %}
 <section class="section">
@@ -14,7 +14,7 @@
     <div class="legal-prose reveal">
       {% block legal_body %}{% endblock %}
       <hr>
-      <p class="legal-prose__fine">Questions about this page? Contact {{ BUSINESS.name }}{% if BUSINESS.email %} at <a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a>{% endif %}{% if BUSINESS.whatsapp %} or on WhatsApp at <a href="{{ wa_href(BUSINESS) }}" target="_blank" rel="noopener">{{ BUSINESS.phone }}</a> (messages only){% endif %}.</p>
+      <p class="legal-prose__fine">Questions about this page? Contact {{ BUSINESS.name }}{% if BUSINESS.email %} at <a href="mailto:{{ BUSINESS.email }}">{{ BUSINESS.email }}</a>{% endif %}{% if BUSINESS.phone %} or by phone on <a href="tel:{{ BUSINESS.phone_href }}">{{ BUSINESS.phone }}</a> (call or text){% endif %}.</p>
     </div>
   </div>
 </section>
