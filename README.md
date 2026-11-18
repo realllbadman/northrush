@@ -1,9 +1,9 @@
 # NorthRush Outdoors
 
 Blinds-forward hunting/outdoor gear storefront: server-rendered FastAPI +
-Jinja2, SQLite catalog of 98 products, client-side cart, quote/checkout flow
+Jinja2, SQLite product catalog, client-side cart, quote/checkout flow
 (orders arrive as inquiries — no card processing), financing calculator, and a
-Basic-auth admin dashboard.
+Basic-auth admin dashboard where products and photos are managed.
 
 ## Stack
 
@@ -20,8 +20,9 @@ cp .env.example .env        # then edit with your real values
 uvicorn backend.main:app --reload --port 8007
 ```
 
-Open http://localhost:8007 — the catalog auto-seeds on startup (98 products,
-upserted by slug; re-running never duplicates and never touches orders).
+Open http://localhost:8007 — the catalog auto-seeds on startup from
+`seed_data.py` (upserted by slug; re-running never duplicates, never touches
+orders, and never overrides products managed in `/admin`).
 
 ## Configuration (.env)
 
@@ -69,8 +70,11 @@ is N x 5. That stops a flood; it is not a precise quota.
 
 `scripts/backup.sh` takes a consistent snapshot via SQLite's online-backup API
 (not `cp`), gzips it, verifies it, and prunes beyond `KEEP_DAYS` (default 14).
-Wire it to cron — see DEPLOY.md. **Orders are the only irreplaceable data**;
-the catalog re-seeds itself from `seed_data.py` on every boot.
+Wire it to cron — see DEPLOY.md. Irreplaceable data: orders, and every product
+added or edited in `/admin` (all in the database), plus the photos uploaded
+there (`static/images/uploads/`). The script also mirrors that folder into
+`backups/uploads/` — add-only, since upload names are content hashes — so a
+restored DB snapshot always finds its photos. Restore both together.
 
 ## Business rules
 
@@ -87,7 +91,7 @@ the catalog re-seeds itself from `seed_data.py` on every boot.
 backend/            FastAPI app (main.py), models, schemas, seed_data.py, routes/, services/
 templates/          Jinja pages (base, _card macro, index, products, detail, checkout, …)
 static/             css/main.css, js/main.js, js/animations.js, images/
-frontend/admin.html Basic-auth admin dashboard (fetches /admin/data)
+frontend/admin.html Basic-auth admin dashboard (products, orders, messages)
 ```
 
 ## Legal pages
@@ -100,8 +104,27 @@ before launch.**
 
 ## Admin
 
-`/admin` — HTTP Basic (constant-time compare). Lists and deletes order
-inquiries and messages/bookings.
+`/admin` — HTTP Basic (constant-time compare). Three tabs:
+
+- **Products** — add, edit and delete products and their photos. Photos are
+  resized in the browser (longest side 1400px, JPEG) before upload, which also
+  strips phone EXIF/GPS data, then stored content-addressed in
+  `static/images/uploads/`. That folder is gitignored and excluded from the
+  deploy rsync, so uploads survive deploys. (With the Dockerfile, mount it as
+  a volume alongside the database.)
+- **Orders** / **Messages** — list and delete inquiries and bookings.
+
+**Who owns a product.** `seed_data.py` still seeds the catalog on every boot,
+but the admin panel wins: once a product is created or edited in `/admin`
+it is flagged `admin_managed` and the seed sync never overwrites or prunes it;
+deleting a product in `/admin` records its slug in `removed_products` so the
+seed never re-inserts it. Products nobody has touched in the admin keep
+following `seed_data.py` as before. A product's slug (its URL) is set from the
+name when created and never changes afterwards.
+
+Write endpoints require an `X-Admin-Request: 1` header in addition to the
+credentials — browsers resend Basic auth cross-site, and the custom header
+forces a CORS preflight that blocks forged form posts.
 
 ## Deploy
 

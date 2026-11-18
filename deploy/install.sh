@@ -158,9 +158,11 @@ say "Sync → ${APP_DIR}"
 
 install -d "$APP_DIR"
 
-# .env and the database live only in APP_DIR and must survive every deploy.
+# .env, the database and photos uploaded in /admin live only in APP_DIR and
+# must survive every deploy. --delete never touches excluded paths.
 rsync -a --delete \
     --exclude='.git/' \
+    --exclude='static/images/uploads/' \
     --exclude='.env' \
     --exclude='*.db' \
     --exclude='*.db-wal' \
@@ -170,7 +172,7 @@ rsync -a --delete \
     --exclude='__pycache__/' \
     --exclude='*.pyc' \
     "${SRC}/" "${APP_DIR}/"
-info "code synced (.env, *.db, backups/ preserved)"
+info "code synced (.env, *.db, backups/, admin photo uploads preserved)"
 
 # ─── 4. secrets ───────────────────────────────────────────────────────────────
 say "Environment"
@@ -288,8 +290,8 @@ say "Backups"
 touch "$BACKUP_LOG"; chown www-data:www-data "$BACKUP_LOG"
 cat > "$CRON" <<CRONEOF
 ${MARKER}
-# Nightly SQLite snapshot. Orders are the only irreplaceable data here —
-# the catalog re-seeds from seed_data.py on every boot.
+# Nightly SQLite snapshot plus a mirror of photos uploaded in /admin. Orders
+# and products added/edited in /admin are irreplaceable.
 SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/bin:/bin
 15 3 * * * www-data ${APP_DIR}/scripts/backup.sh >> ${BACKUP_LOG} 2>&1

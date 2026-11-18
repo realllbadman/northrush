@@ -4,11 +4,14 @@ Every product is a self-contained dict. ``image`` is either a bare filename
 (served from static/images/) or a full http(s) URL. Edit a product here and
 restart — sync_products() upserts the catalog and prunes anything removed.
 Orders/bookings live in separate tables and are never touched.
+
+Products added or edited in /admin are owned by the database from then on:
+changes to them here are ignored. See sync_products().
 """
 import json
 import os
 
-from backend.models import Product
+from backend.models import Product, RemovedProduct
 
 IMAGES_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "images"
@@ -2537,15 +2540,26 @@ CATALOG = [
 
 
 def sync_products(db):
-    """Upsert the catalog by slug, then prune products no longer present."""
-    inserted = updated = 0
+    """Upsert the catalog by slug, then prune products no longer present.
+
+    The admin panel takes precedence over this file: a product created or
+    edited in /admin (``admin_managed``) is never overwritten or pruned here,
+    and a slug deleted in /admin (``RemovedProduct``) is never re-inserted.
+    """
+    removed_slugs = {slug for (slug,) in db.query(RemovedProduct.slug).all()}
+    inserted = updated = kept = 0
     for raw in CATALOG:
         p = _normalize(raw)
+        if p["slug"] in removed_slugs:
+            continue
         if p["slug"] in IMAGE_OVERRIDES:            # your own dropped photo wins
             p["image"] = IMAGE_OVERRIDES[p["slug"]]
             p["images"] = [IMAGE_OVERRIDES[p["slug"]]]
         existing = db.query(Product).filter(Product.slug == p["slug"]).first()
         if existing:
+            if existing.admin_managed:
+                kept += 1
+                continue
             for f in _FIELDS:
                 setattr(existing, f, p[f])
             updated += 1
@@ -2557,12 +2571,13 @@ def sync_products(db):
     keep = {r["slug"] for r in CATALOG}
     removed = 0
     for prod in db.query(Product).all():
-        if prod.slug not in keep:
+        if prod.slug not in keep and not prod.admin_managed:
             db.delete(prod)
             removed += 1
     if removed:
         db.commit()
 
     print(f"[seed] catalog synced: {inserted} inserted, {updated} updated, "
-          f"{removed} pruned, {len(CATALOG)} total")
+          f"{kept} kept (edited in admin), {removed} pruned, "
+          f"{len(removed_slugs)} deleted in admin, {len(CATALOG)} in seed file")
     return inserted, updated

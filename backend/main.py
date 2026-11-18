@@ -226,6 +226,7 @@ MIGRATIONS = [
     "ALTER TABLE products ADD COLUMN images JSON",
     "ALTER TABLE products ADD COLUMN price_max FLOAT",
     "ALTER TABLE bookings ADD COLUMN product_interest VARCHAR DEFAULT ''",
+    "ALTER TABLE products ADD COLUMN admin_managed INTEGER DEFAULT 0",
 ]
 
 

@@ -1,4 +1,4 @@
-"""ORM models: Product (catalog), Inquiry (orders/quotes), Booking (services)."""
+"""ORM models: Product (catalog), RemovedProduct, Inquiry (orders/quotes), Booking (services)."""
 from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
@@ -25,6 +25,17 @@ class Product(Base):
     badge = Column(String, nullable=True)              # Best Seller / New / Sale / Hot Deal
     image = Column(Text, default="placeholder.jpg")    # primary = first of images
     images = Column(JSON, default=list)                # list[str]
+    # 1 once the product has been created or edited in /admin. The boot-time
+    # seed sync then leaves it alone: the admin's version wins over seed_data.py.
+    admin_managed = Column(Integer, default=0)
+
+
+class RemovedProduct(Base):
+    """Slugs deleted in /admin, so the seed sync does not bring them back."""
+    __tablename__ = "removed_products"
+
+    slug = Column(String, primary_key=True)
+    removed_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Inquiry(Base):

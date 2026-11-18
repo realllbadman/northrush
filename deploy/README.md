@@ -193,6 +193,8 @@ days, logging to `/var/log/northrush-backup.log`. It runs the backup once
 during install to prove it works. Snapshots use SQLite's online-backup API, so
 a copy taken mid-write is still consistent.
 
-**Copy them off the box.** A backup on the same disk is not a backup. Orders
-are the only irreplaceable data — the 98-product catalog re-seeds itself from
-`seed_data.py` on every boot.
+**Copy them off the box.** A backup on the same disk is not a backup.
+Irreplaceable: orders and products added or edited in `/admin` (the `.db.gz`
+snapshots) and photos uploaded in `/admin` (mirrored to `backups/uploads/`).
+Copy the whole `backups/` directory, e.g.
+`rsync -a root@${SERVER_IP}:/opt/northrush/backups/ ./northrush-backups/`.

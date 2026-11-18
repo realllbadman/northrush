@@ -2,6 +2,11 @@
 # Nightly SQLite backup. Uses the online-backup API (not cp) so a snapshot
 # taken mid-write is still consistent. Keeps KEEP_DAYS of history.
 #
+# Also mirrors photos uploaded in /admin (static/images/uploads/) into
+# $DEST/uploads/. Upload names are content hashes and never rewritten, so the
+# mirror is add-only: nothing is ever deleted from it, which also keeps the
+# photos an older DB snapshot refers to.
+#
 #   crontab -e
 #   15 3 * * * /srv/northrush/scripts/backup.sh >> /var/log/northrush-backup.log 2>&1
 set -euo pipefail
@@ -35,4 +40,15 @@ gzip -f "$OUT"
 gzip -t "${OUT}.gz" || { echo "$(date -Is) BACKUP CORRUPT: ${OUT}.gz"; exit 1; }
 
 find "$DEST" -name 'northrush-*.db.gz' -mtime "+${KEEP_DAYS}" -delete
+
+UPLOADS="${APP_DIR}/static/images/uploads"
+if [ -d "$UPLOADS" ]; then
+    mkdir -p "${DEST}/uploads"
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --exclude='*.part' "${UPLOADS}/" "${DEST}/uploads/"
+    else
+        cp -a "${UPLOADS}/." "${DEST}/uploads/"
+    fi
+    echo "  uploads mirrored: $(find "${DEST}/uploads" -type f | wc -l) photos"
+fi
 echo "$(date -Is) backup ok -> ${OUT}.gz ($(du -h "${OUT}.gz" | cut -f1))"
