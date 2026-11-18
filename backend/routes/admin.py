@@ -1,54 +1,145 @@
-"""Admin JSON API — HTTP Basic auth with constant-time credential compare.
+"""Admin JSON API — login form + signed session cookie, constant-time compare.
 
+/admin shows a login form; a successful sign-in sets a signed session cookie.
 Orders and messages are read/delete only. Products are full CRUD, plus photo
 upload into static/images/uploads/ (gitignored, kept across deploys, mirrored
 by scripts/backup.sh).
 """
 import hashlib
+import hmac
+import logging
 import os
 import re
 import secrets
+import time
+from collections import defaultdict, deque
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.models import Booking, Inquiry, Product, RemovedProduct
 from backend.seed_data import CATEGORY_LABELS, CATEGORY_SUBCATEGORIES, IMAGES_DIR
+from backend.services.antispam import client_ip
 
+log = logging.getLogger("northrush.admin")
 router = APIRouter(tags=["admin"])
-security = HTTPBasic()
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "change-me")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me")
 
 
-def require_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    user_ok = secrets.compare_digest(credentials.username.encode(), ADMIN_USERNAME.encode())
-    pass_ok = secrets.compare_digest(credentials.password.encode(), ADMIN_PASSWORD.encode())
-    if not (user_ok and pass_ok):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
+# --------------------------------------------------------------------------- #
+#  Login: a form on /admin posts the credentials once, and gets back a signed,
+#  HttpOnly session cookie. (This replaced the browser's Basic-auth popup,
+#  which some browsers hide or skip silently once credentials are cached.)
+# --------------------------------------------------------------------------- #
+
+SESSION_COOKIE = "nr_admin"
+SESSION_SECONDS = 7 * 24 * 3600
+# Derived from the credentials, so every worker agrees on it without shared
+# state, and changing ADMIN_PASSWORD logs every existing session out.
+_SESSION_KEY = hashlib.sha256(
+    "|".join(("northrush-admin-session", os.getenv("ADMIN_SESSION_SECRET", ""),
+              ADMIN_USERNAME, ADMIN_PASSWORD)).encode()
+).digest()
+
+LOGIN_WINDOW_SECONDS = 15 * 60
+LOGIN_MAX_FAILURES = 10        # per IP per window (per worker)
+_login_failures: dict = defaultdict(deque)
 
 
-def require_admin_write(request: Request, user: str = Depends(require_admin)):
-    """Admin auth plus a custom header on every state-changing call.
+def _session_mac(expires: int) -> str:
+    return hmac.new(_SESSION_KEY, f"{ADMIN_USERNAME}|{expires}".encode(), hashlib.sha256).hexdigest()
 
-    Browsers resend cached Basic credentials on cross-site requests, so a
-    hostile page could otherwise submit a form (multipart is a "simple"
-    request) straight at these endpoints. A custom header forces a CORS
-    preflight, which this app never grants.
+
+def _session_ok(token: str) -> bool:
+    try:
+        exp_s, mac = token.split(".", 1)
+        expires = int(exp_s)
+    except (ValueError, AttributeError):
+        return False
+    return expires > time.time() and hmac.compare_digest(mac, _session_mac(expires))
+
+
+def require_admin(request: Request):
+    if not _session_ok(request.cookies.get(SESSION_COOKIE, "")):
+        # Deliberately no WWW-Authenticate header: that is what made browsers
+        # pop up their own login box instead of showing ours.
+        raise HTTPException(status_code=401, detail="Please sign in")
+    return ADMIN_USERNAME
+
+
+def _require_admin_header(request: Request):
+    """Custom header on every state-changing call.
+
+    It forces a CORS preflight, which this app never grants, so another site
+    cannot forge these requests. (The SameSite=Strict cookie already stops
+    that; this is the second lock.)
     """
     if request.headers.get("x-admin-request") != "1":
         raise HTTPException(status_code=403, detail="Missing admin request header")
+
+
+def require_admin_write(request: Request, user: str = Depends(require_admin)):
+    _require_admin_header(request)
     return user
+
+
+def _login_rate_check(ip: str) -> None:
+    now = time.time()
+    fails = _login_failures[ip]
+    while fails and now - fails[0] > LOGIN_WINDOW_SECONDS:
+        fails.popleft()
+    if not fails:
+        _login_failures.pop(ip, None)
+    elif len(fails) >= LOGIN_MAX_FAILURES:
+        retry = int(LOGIN_WINDOW_SECONDS - (now - fails[0]))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many wrong attempts. Try again in {max(retry // 60, 1)} minutes.",
+            headers={"Retry-After": str(max(retry, 1))},
+        )
+
+
+class LoginIn(BaseModel):
+    username: str = Field(max_length=200)
+    password: str = Field(max_length=200)
+
+
+@router.post("/admin/login")
+def admin_login(data: LoginIn, request: Request, response: Response):
+    _require_admin_header(request)
+    ip = client_ip(request)
+    _login_rate_check(ip)
+    user_ok = secrets.compare_digest(data.username.encode(), ADMIN_USERNAME.encode())
+    pass_ok = secrets.compare_digest(data.password.encode(), ADMIN_PASSWORD.encode())
+    if not (user_ok and pass_ok):
+        _login_failures[ip].append(time.time())
+        log.warning("admin login failed from %s", ip)
+        raise HTTPException(status_code=401, detail="Wrong username or password.")
+    _login_failures.pop(ip, None)
+    expires = int(time.time()) + SESSION_SECONDS
+    response.set_cookie(
+        SESSION_COOKIE, f"{expires}.{_session_mac(expires)}",
+        max_age=SESSION_SECONDS, path="/admin", httponly=True, samesite="strict",
+        secure=request.headers.get("x-forwarded-proto") == "https" or request.url.scheme == "https",
+    )
+    return {"user": ADMIN_USERNAME}
+
+
+@router.post("/admin/logout")
+def admin_logout(request: Request, response: Response):
+    _require_admin_header(request)
+    response.delete_cookie(SESSION_COOKIE, path="/admin")
+    return {"ok": True}
+
+
+@router.get("/admin/session")
+def admin_session(user: str = Depends(require_admin)):
+    return {"user": user}
 
 
 @router.get("/admin/data")
@@ -95,7 +186,7 @@ def admin_data(_: str = Depends(require_admin), db: Session = Depends(get_db)):
 
 
 @router.delete("/admin/inquiries/{inquiry_id}")
-def delete_inquiry(inquiry_id: int, _: str = Depends(require_admin), db: Session = Depends(get_db)):
+def delete_inquiry(inquiry_id: int, _: str = Depends(require_admin_write), db: Session = Depends(get_db)):
     inq = db.query(Inquiry).filter(Inquiry.id == inquiry_id).first()
     if not inq:
         raise HTTPException(status_code=404, detail="Inquiry not found")
@@ -105,7 +196,7 @@ def delete_inquiry(inquiry_id: int, _: str = Depends(require_admin), db: Session
 
 
 @router.delete("/admin/bookings/{booking_id}")
-def delete_booking(booking_id: int, _: str = Depends(require_admin), db: Session = Depends(get_db)):
+def delete_booking(booking_id: int, _: str = Depends(require_admin_write), db: Session = Depends(get_db)):
     bk = db.query(Booking).filter(Booking.id == booking_id).first()
     if not bk:
         raise HTTPException(status_code=404, detail="Booking not found")

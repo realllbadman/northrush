@@ -3,7 +3,7 @@
 Blinds-forward hunting/outdoor gear storefront: server-rendered FastAPI +
 Jinja2, SQLite product catalog, client-side cart, quote/checkout flow
 (orders arrive as inquiries — no card processing), financing calculator, and a
-Basic-auth admin dashboard where products and photos are managed.
+admin dashboard (login page) where orders, messages, products and photos are managed.
 
 ## Stack
 
@@ -31,7 +31,7 @@ orders, and never overrides products managed in `/admin`).
 | `SMTP_USER` / `SMTP_PASSWORD` | Gmail + app password (spaces are stripped automatically) |
 | `OWNER_EMAIL` | Where order/booking notifications go |
 | `BUSINESS_NAME/EMAIL/ADDRESS`, `OWNER_PHONE`, `BUSINESS_HOURS` | Shown in header/footer/contact |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | HTTP Basic creds for `/admin` |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Login for `/admin` (changing the password signs every session out) |
 | `DATABASE_URL` | Defaults to `sqlite:///./northrush.db` |
 | `BUSINESS_WHATSAPP` | Digits only; blank hides the WhatsApp links |
 | `SMARTSUPP_KEY` | Live-chat site key; **blank disables the widget** (keep it blank in dev) |
@@ -91,7 +91,7 @@ restored DB snapshot always finds its photos. Restore both together.
 backend/            FastAPI app (main.py), models, schemas, seed_data.py, routes/, services/
 templates/          Jinja pages (base, _card macro, index, products, detail, checkout, …)
 static/             css/main.css, js/main.js, js/animations.js, images/
-frontend/admin.html Basic-auth admin dashboard (products, orders, messages)
+frontend/admin.html Admin dashboard: login screen + orders, messages, products
 ```
 
 ## Legal pages
@@ -104,7 +104,10 @@ before launch.**
 
 ## Admin
 
-`/admin` — HTTP Basic (constant-time compare). Three tabs:
+`/admin` shows a login page. Signing in (constant-time compare against
+`ADMIN_USERNAME` / `ADMIN_PASSWORD`) sets a signed, HttpOnly, SameSite=Strict
+session cookie for 7 days; **Log out** clears it. Ten wrong attempts from one
+IP lock that IP out for 15 minutes. Then three tabs:
 
 - **Products** — add, edit and delete products and their photos. Photos are
   resized in the browser (longest side 1400px, JPEG) before upload, which also
@@ -113,6 +116,7 @@ before launch.**
   deploy rsync, so uploads survive deploys. (With the Dockerfile, mount it as
   a volume alongside the database.)
 - **Orders** / **Messages** — list and delete inquiries and bookings.
+  (These come first, exactly as before; Products is the third tab.)
 
 **Who owns a product.** `seed_data.py` still seeds the catalog on every boot,
 but the admin panel wins: once a product is created or edited in `/admin`
@@ -122,9 +126,9 @@ seed never re-inserts it. Products nobody has touched in the admin keep
 following `seed_data.py` as before. A product's slug (its URL) is set from the
 name when created and never changes afterwards.
 
-Write endpoints require an `X-Admin-Request: 1` header in addition to the
-credentials — browsers resend Basic auth cross-site, and the custom header
-forces a CORS preflight that blocks forged form posts.
+Every state-changing endpoint also requires an `X-Admin-Request: 1` header,
+which forces a CORS preflight — a second lock against forged cross-site
+requests on top of the SameSite cookie.
 
 ## Deploy
 

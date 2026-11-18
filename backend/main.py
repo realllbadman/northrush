@@ -513,9 +513,9 @@ def about(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/admin")
-def admin_page(_: str = Depends(admin.require_admin)):
-    # Basic auth on the page itself so the browser prompts once, then reuses
-    # the credentials for the /admin/data fetch.
+def admin_page():
+    # The page itself is public: it shows its own login form, and every
+    # /admin/* data call behind it requires the session cookie.
     return FileResponse(os.path.join(BASE_DIR, "frontend", "admin.html"))
 
 
