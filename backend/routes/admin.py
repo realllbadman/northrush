@@ -162,6 +162,8 @@ def admin_data(_: str = Depends(require_admin), db: Session = Depends(get_db)):
                 "payment_method": i.payment_method,
                 "notes": i.notes,
                 "items": i.items or [],
+                "coupon_code": i.coupon_code or "",
+                "discount": i.discount or 0,
                 "total": i.total,
                 "status": i.status,
                 "created_at": i.created_at.isoformat() if i.created_at else None,

@@ -1235,7 +1235,9 @@ h3 { font-size: 1.1rem; }
   position: fixed;
   bottom: 1.4rem;
   left: 50%;
-  transform: translate(-50%, 140%);
+  /* Fully off-screen when idle: 140% left a sliver of the empty pill showing. */
+  transform: translate(-50%, calc(100% + 2rem));
+  visibility: hidden;
   background: var(--ink);
   color: #fff;
   font-weight: 600;
@@ -1244,11 +1246,11 @@ h3 { font-size: 1.1rem; }
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-lg);
   z-index: 120;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.3s;
   max-width: 90vw;
   text-align: center;
 }
-.toast.is-visible { transform: translate(-50%, 0); }
+.toast.is-visible { transform: translate(-50%, 0); visibility: visible; transition-delay: 0s; }
 
 /* ---------- Motion ---------- */
 .page-fade { animation: pageFade 0.4s ease both; }
@@ -1317,3 +1319,61 @@ h3 { font-size: 1.1rem; }
   .site-footer__grid { grid-template-columns: 1fr; }
   .hero__ctas .btn { width: 100%; }
 }
+
+/* ---------- Promo billboard (homepage, while a coupon is active) ---------- */
+.billboard {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(224, 138, 43, 0.28) 0%, rgba(224, 138, 43, 0) 55%),
+    linear-gradient(135deg, #0d1411 0%, #16241d 100%);
+  color: #fff;
+  padding: var(--space-5) 0;
+  border-bottom: 4px solid var(--amber);
+}
+.billboard__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; }
+.billboard__copy { min-width: 0; flex: 1 1 420px; }
+.billboard__eyebrow {
+  display: inline-block; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #0d1411; background: var(--amber); padding: 0.3rem 0.8rem; border-radius: var(--radius-pill);
+}
+.billboard__title {
+  font-family: var(--font-head); font-weight: 800; line-height: 1; letter-spacing: -0.02em;
+  font-size: clamp(2.4rem, 6vw, 4.4rem); margin: 0.9rem 0 0.6rem; color: #fff;
+}
+.billboard__title span { color: var(--amber); }
+.billboard__sub { color: #c9d6cf; font-size: 1.05rem; max-width: 34rem; }
+.billboard__deal { display: flex; flex-direction: column; align-items: stretch; gap: 0.8rem; flex: 0 1 300px; }
+.billboard__code {
+  display: grid; justify-items: center; gap: 0.15rem; cursor: pointer; font: inherit; color: #fff;
+  background: rgba(255, 255, 255, 0.06); border: 2px dashed var(--amber); border-radius: var(--radius);
+  padding: 0.9rem 1.2rem; transition: background 0.2s;
+}
+.billboard__code:hover { background: rgba(224, 138, 43, 0.14); }
+.billboard__code:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.billboard__code-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #c9d6cf; }
+.billboard__code-value { font-family: var(--font-head); font-size: 1.9rem; font-weight: 800; letter-spacing: 0.08em; }
+.billboard__code-hint { font-size: 0.78rem; color: var(--amber); font-weight: 600; }
+.billboard__cta { justify-content: center; }
+@media (max-width: 640px) {
+  .billboard { padding: var(--space-4) 0; }
+  .billboard__inner { gap: var(--space-4); }
+  .billboard__copy, .billboard__deal { flex: 1 1 100%; }
+  .billboard__sub { font-size: 0.95rem; }
+  .billboard__eyebrow { font-size: 0.66rem; letter-spacing: 0.08em; padding: 0.3rem 0.65rem; }
+}
+
+/* ---------- Checkout coupon ---------- */
+.co-summary__totals > div[hidden] { display: none; }
+.co-summary__discount dt, .co-summary__discount dd { color: var(--forest); font-weight: 700; }
+.coupon { margin-top: 1rem; display: grid; gap: 0.4rem; }
+.coupon label { font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.coupon__row { display: flex; gap: 0.5rem; }
+.coupon__row input {
+  flex: 1; min-width: 0; font: inherit; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 0.55rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; color: var(--ink);
+}
+.coupon__row input[readonly] { background: var(--canvas); color: var(--forest); font-weight: 700; }
+.coupon__msg { font-size: 0.82rem; color: var(--forest); font-weight: 600; min-height: 1em; }
+.coupon__msg:empty { display: none; }
+.coupon__msg.is-bad { color: #b3372f; }

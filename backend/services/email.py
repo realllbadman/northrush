@@ -229,6 +229,19 @@ def _shell(kicker, headline, hero_label, hero_value, sections_html, preheader,
 #  Order inquiries
 # --------------------------------------------------------------------------- #
 
+def _discount(inq) -> float:
+    return float(getattr(inq, "discount", 0) or 0)
+
+
+def _discount_row(inq) -> str:
+    return (
+        f'<tr><td style="padding:8px 10px 0 0;font:600 13px/1.5 {FONT};color:{FOREST};">'
+        f'Coupon {_esc(inq.coupon_code)}</td>'
+        f'<td align="right" style="padding:8px 0 0;font:700 13px/1.5 {FONT};color:{FOREST};">'
+        f'&minus;{_money(_discount(inq))}</td></tr>'
+    )
+
+
 def format_inquiry(inq) -> str:
     """Plain-text fallback."""
     lines = [
@@ -246,6 +259,8 @@ def format_inquiry(inq) -> str:
     ]
     for it in inq.items or []:
         lines.append(f"  - {it.get('qty', 1)} x {it.get('name')} @ ${it.get('price', 0):,.2f}")
+    if _discount(inq):
+        lines += ["", f"Coupon:   {inq.coupon_code} (-${_discount(inq):,.2f})"]
     lines += ["", f"TOTAL: ${inq.total:,.2f}"]
     if inq.notes:
         lines += ["", f"Notes: {inq.notes}"]
@@ -276,7 +291,8 @@ def format_inquiry_html(inq) -> str:
                 f'(no line items)</td><td></td></tr>')
 
     subtotal = sum(float(i.get("price", 0) or 0) * (i.get("qty", 1) or 1) for i in items)
-    extra = float(inq.total or 0) - subtotal
+    discount = _discount(inq)
+    extra = float(inq.total or 0) - subtotal + discount
 
     totals = (
         f'<tr><td style="padding:12px 10px 0 0;font:600 13px/1.5 {FONT};color:{MUTED};">'
@@ -284,6 +300,8 @@ def format_inquiry_html(inq) -> str:
         f'<td align="right" style="padding:12px 0 0;font:600 13px/1.5 {FONT};color:{INK};">'
         f'{_money(subtotal)}</td></tr>'
     )
+    if discount:
+        totals += _discount_row(inq)
     if abs(extra) >= 0.01:
         totals += (
             f'<tr><td style="padding:5px 10px 0 0;font:600 13px/1.5 {FONT};color:{MUTED};">'
@@ -461,6 +479,8 @@ def format_customer_inquiry(inq) -> str:
     ]
     for it in inq.items or []:
         lines.append(f"  - {it.get('qty', 1)} x {it.get('name')} @ ${it.get('price', 0):,.2f}")
+    if _discount(inq):
+        lines += [f"  Coupon {inq.coupon_code}: -${_discount(inq):,.2f}"]
     lines += ["", f"ESTIMATED TOTAL: ${inq.total:,.2f}",
               "(Final freight is confirmed before any payment.)", ""]
     if inq.address:
@@ -487,6 +507,9 @@ def format_customer_inquiry_html(inq) -> str:
             f'border-bottom:1px solid {BORDER};white-space:nowrap;">{_money(price * qty)}</td>'
             f'</tr>'
         )
+
+    if _discount(inq):
+        rows += _discount_row(inq)
 
     sections = _eyebrow("What happens next")
     sections += _steps([

@@ -410,6 +410,7 @@
             "<span><b>Freight:</b> " + esc(i.freight_region) + "</span>" +
             "<span><b>Contact:</b> " + esc(i.contact_pref) + (i.best_time ? " (" + esc(i.best_time) + ")" : "") + "</span>" +
             "<span><b>Payment:</b> " + esc(i.payment_method) + "</span>" +
+            (i.coupon_code ? "<span><b>Coupon:</b> " + esc(i.coupon_code) + " (−" + money(i.discount) + ")</span>" : "") +
           "</div>" +
           (items ? '<ul class="items-list">' + items + "</ul>" : "") +
           (i.notes ? '<div class="notes">' + esc(i.notes) + "</div>" : "") +

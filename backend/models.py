@@ -59,7 +59,9 @@ class Inquiry(Base):
     payment_method = Column(String, default="")        # see PAYMENT_METHODS in main.py
     notes = Column(Text, default="")
     items = Column(JSON, default=list)                 # cart line items
-    total = Column(Float, default=0.0)
+    coupon_code = Column(String, default="")           # see COUPONS in pricing.py
+    discount = Column(Float, default=0.0)              # amount the coupon took off
+    total = Column(Float, default=0.0)                 # computed server-side
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
 

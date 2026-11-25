@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.pricing import compute_totals
 from backend.models import Inquiry
 from backend.schemas import InquiryCreate, MessageOut
 from backend.services.antispam import enforce_rate_limit, is_bot
@@ -32,6 +33,9 @@ async def create_inquiry(
         # returned, so a bot submission can never fire an ad conversion.
         return {"message": "Order received! We'll contact you shortly to confirm and arrange payment."}
 
+    # Shipping, freight and coupon are recomputed here, never taken from the
+    # browser; an expired or made-up coupon simply gives no discount.
+    totals = compute_totals(payload.items, payload.freight_region, payload.coupon)
     inq = Inquiry(
         first_name=payload.first_name.strip(),
         last_name=payload.last_name.strip(),
@@ -43,13 +47,15 @@ async def create_inquiry(
         state=payload.state.strip(),
         zip=payload.zip.strip(),
         country=payload.country.strip(),
-        freight_region=payload.freight_region,
+        freight_region=totals["region"],
         contact_pref=payload.contact_pref,
         best_time=payload.best_time.strip(),
         payment_method=payload.payment_method,
         notes=payload.notes.strip(),
         items=[it.model_dump() for it in payload.items],
-        total=payload.total,
+        coupon_code=totals["coupon"],
+        discount=totals["discount"],
+        total=totals["total"],
     )
     db.add(inq)
     db.commit()
@@ -75,4 +81,5 @@ async def create_inquiry(
     return {
         "message": "Order received! We'll contact you shortly to confirm and arrange payment.",
         "id": inq.id,
+        "total": inq.total,
     }

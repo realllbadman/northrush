@@ -82,11 +82,20 @@
         <div id="co-items" class="co-summary__items"></div>
         <dl class="co-summary__totals">
           <div><dt>Subtotal</dt><dd id="co-subtotal">$0.00</dd></div>
+          <div class="co-summary__discount" id="co-discount-row" hidden><dt id="co-discount-label">Coupon</dt><dd id="co-discount">−$0.00</dd></div>
           <div><dt>Shipping</dt><dd id="co-shipping">—</dd></div>
           <div><dt>Freight</dt><dd id="co-freight">$0.00</dd></div>
           <div class="co-summary__grand"><dt>Estimated total</dt><dd id="co-total">$0.00</dd></div>
         </dl>
-        <p class="co-summary__note">Free domestic shipping over ${{ '%d' | format(BUSINESS.free_ship_threshold) }} · otherwise flat ${{ BUSINESS.flat_shipping }}. International freight added by region.</p>
+        <form class="coupon" id="coupon-form" novalidate>
+          <label for="coupon-input">Coupon code</label>
+          <div class="coupon__row">
+            <input id="coupon-input" name="coupon" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="e.g. BLACKFRIDAY">
+            <button type="submit" class="btn btn--outline btn--sm" id="coupon-apply">Apply</button>
+          </div>
+          <p class="coupon__msg" id="coupon-msg" role="status" aria-live="polite"></p>
+        </form>
+        <p class="co-summary__note">Free domestic shipping over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }} · otherwise flat ${{ BUSINESS.flat_shipping }}. International freight added by region.</p>
       </aside>
     </div>
 

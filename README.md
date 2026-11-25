@@ -78,8 +78,13 @@ restored DB snapshot always finds its photos. Restore both together.
 
 ## Business rules
 
-- Free domestic shipping over $1,500, else flat $14.99.
+- Free domestic shipping over $1,000, else flat $150.
 - International freight by region (Canada/Mexico $250 … Other Intl $900).
+- Coupons (e.g. `BLACKFRIDAY`, 10% off items, ends after Cyber Monday) and
+  the homepage billboard that advertises them.
+- All of the above live in `backend/pricing.py`. The checkout page gets the
+  same numbers, and the server recomputes every order total itself
+  (shipping threshold judged before the discount).
 - Financing only on items over $1,500: $500 down, 36 months,
   monthly = (price − 500) / 36.
 - Cart lives in `localStorage` (`northrush_cart_v1`); checkout POSTs the cart +

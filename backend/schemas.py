@@ -29,7 +29,8 @@ class InquiryCreate(BaseModel):
     payment_method: str = "Cash App"
     notes: str = ""
     items: List[CartItem] = []
-    total: float = 0.0
+    coupon: str = Field("", max_length=40)
+    total: float = 0.0         # ignored: the server recomputes it (pricing.py)
     website: str = ""          # honeypot — humans leave this empty
 
 
@@ -47,3 +48,4 @@ class BookingCreate(BaseModel):
 class MessageOut(BaseModel):
     message: str
     id: Optional[int] = None    # order number — used as the ad conversion's transaction_id
+    total: Optional[float] = None   # server-computed order value

@@ -15,12 +15,12 @@
   </script>
   {% endif %}
   <title>{% block title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.{% endblock %}">
+  <meta name="description" content="{% block meta_description %}Premium deer blinds, tower stands and hunting gear. Free shipping over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }}. Financing available. Ships to all 50 states.{% endblock %}">
   {% block social_meta %}
   <meta property="og:site_name" content="{{ BUSINESS.name }}">
   <meta property="og:type" content="website">
   <meta property="og:title" content="{% block og_title %}{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear{% endblock %}">
-  <meta property="og:description" content="Premium deer blinds, tower stands and hunting gear. Free shipping over $1,500. Financing available. Ships to all 50 states.">
+  <meta property="og:description" content="Premium deer blinds, tower stands and hunting gear. Free shipping over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }}. Financing available. Ships to all 50 states.">
   <meta property="og:image" content="{{ og_image(request) }}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ BUSINESS.name }} — Deer Blinds, Stands & Hunting Gear">
@@ -39,7 +39,7 @@
   <!-- Promo strip -->
   <div class="promo-strip">
     <div class="container promo-strip__inner">
-      <span>Free shipping on orders over $1,500</span>
+      <span>Free shipping on orders over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }}</span>
       <span class="promo-sep" aria-hidden="true">·</span>
       <span>Financing available</span>
       <span class="promo-sep" aria-hidden="true">·</span>
@@ -207,6 +207,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script>window.NR_SHIP = {{ SHIP_CONFIG | tojson }};</script>
   <script src="/static/js/main.js?v={{ ASSET_VERSION }}" defer></script>
   <script src="/static/js/animations.js?v={{ ASSET_VERSION }}" defer></script>
   {% block scripts %}{% endblock %}

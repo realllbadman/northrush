@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 load_dotenv()
 
+from backend import pricing  # noqa: E402
 from backend.database import Base, SessionLocal, engine, get_db  # noqa: E402
 from backend.models import Product  # noqa: E402
 from backend.routes import admin, bookings, inquiries  # noqa: E402
@@ -36,7 +37,7 @@ log = logging.getLogger("northrush")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-ASSET_VERSION = "10"  # bump on every CSS/JS change
+ASSET_VERSION = "11"  # bump on every CSS/JS change
 
 # Smartsupp live chat. Public site key — blank it to disable the widget
 # (kept out of dev/test that way).
@@ -98,20 +99,12 @@ BUSINESS = {
     "phone_href": _PHONE_HREF,
     "address": os.getenv("BUSINESS_ADDRESS", ""),
     "hours": os.getenv("BUSINESS_HOURS", "Mon–Sat 8am–6pm CT"),
-    "free_ship_threshold": 1500,
-    "flat_shipping": 14.99,
+    # Shipping rules live in backend/pricing.py; these are for templates.
+    "free_ship_threshold": pricing.FREE_SHIP_THRESHOLD,
+    "flat_shipping": pricing.FLAT_SHIPPING,
 }
 
-FREIGHT_REGIONS = [
-    ("United States", 0),
-    ("Canada / Mexico", 250),
-    ("Europe / UK", 600),
-    ("Asia", 750),
-    ("Middle East", 800),
-    ("Australia / New Zealand", 850),
-    ("South America", 800),
-    ("Other International", 900),
-]
+FREIGHT_REGIONS = pricing.FREIGHT_REGIONS
 
 US_STATES = [
     "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -227,6 +220,8 @@ MIGRATIONS = [
     "ALTER TABLE products ADD COLUMN price_max FLOAT",
     "ALTER TABLE bookings ADD COLUMN product_interest VARCHAR DEFAULT ''",
     "ALTER TABLE products ADD COLUMN admin_managed INTEGER DEFAULT 0",
+    "ALTER TABLE inquiries ADD COLUMN coupon_code VARCHAR DEFAULT ''",
+    "ALTER TABLE inquiries ADD COLUMN discount FLOAT DEFAULT 0",
 ]
 
 
@@ -295,6 +290,8 @@ _env.globals.update(
     CATEGORY_SUBCATEGORIES=CATEGORY_SUBCATEGORIES,
     SLIDER_CHIPS=SLIDER_CHIPS,
     FREIGHT_REGIONS=FREIGHT_REGIONS,
+    SHIP_CONFIG=pricing.checkout_config(),
+    billboard_promo=pricing.billboard_promo,   # called per render, so it expires on time
     US_STATES=US_STATES,
     PAYMENT_METHODS=PAYMENT_METHODS,
     ASSET_VERSION=ASSET_VERSION,
@@ -481,6 +478,15 @@ def product_detail(request: Request, slug: str, db: Session = Depends(get_db)):
 @app.get("/checkout")
 def checkout(request: Request):
     return templates.TemplateResponse(request, "checkout.html", {})
+
+
+@app.get("/coupons/{code}")
+def check_coupon(code: str):
+    """Checkout's "Apply" button. Only reveals a code the customer typed."""
+    c = pricing.find_coupon(code[:40])
+    if not c:
+        raise StarletteHTTPException(status_code=404, detail="That code isn't valid or has expired.")
+    return {"code": c["code"], "percent": c["percent"], "label": c["label"]}
 
 
 @app.get("/financing")

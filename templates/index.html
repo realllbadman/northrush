@@ -3,6 +3,28 @@
 
 {% block content %}
 
+{% set promo = billboard_promo() %}
+{% if promo %}
+<!-- PROMO BILLBOARD (shows only while the coupon is active; see backend/pricing.py) -->
+<section class="billboard" aria-label="{{ promo.label }} sale">
+  <div class="container billboard__inner">
+    <div class="billboard__copy">
+      <span class="billboard__eyebrow">{{ promo.label }} sale · ends {{ promo.ends_text }}</span>
+      <h2 class="billboard__title"><span>{{ promo.percent }}% off</span> everything</h2>
+      <p class="billboard__sub">Blinds, stands, optics and gear. Enter the code at checkout.</p>
+    </div>
+    <div class="billboard__deal">
+      <button type="button" class="billboard__code" data-copy-code="{{ promo.code }}" aria-label="Copy coupon code {{ promo.code }}">
+        <span class="billboard__code-label">Coupon code</span>
+        <span class="billboard__code-value">{{ promo.code }}</span>
+        <span class="billboard__code-hint" data-copy-hint>Tap to copy</span>
+      </button>
+      <a class="btn btn--primary btn--lg billboard__cta" href="/products?category=deer-blinds-stands">Shop the sale</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- HERO -->
 <section class="hero">
   <div class="container hero__grid">
@@ -15,7 +37,7 @@
         <a class="btn btn--outline btn--lg" href="/financing">Financing from $500 down</a>
       </div>
       <ul class="hero__ticks reveal">
-        <li>Free shipping over $1,500</li>
+        <li>Free shipping over ${{ '{:,.0f}'.format(BUSINESS.free_ship_threshold) }}</li>
         <li>Ships to all 50 states</li>
         <li>Real support, real hunters</li>
       </ul>

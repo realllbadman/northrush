@@ -3,8 +3,12 @@
   "use strict";
 
   var CART_KEY = "northrush_cart_v1";
-  var FREE_SHIP = 1500;
-  var FLAT_SHIP = 14.99;
+  // Shipping rules come from the server (backend/pricing.py via base.html),
+  // so the page can never drift from what the server charges.
+  var SHIP = window.NR_SHIP || {};
+  var FREE_SHIP = SHIP.freeShip != null ? SHIP.freeShip : 1000;
+  var FLAT_SHIP = SHIP.flatShip != null ? SHIP.flatShip : 150;
+  var COUPON_KEY = "northrush_coupon_v1";
 
   /* ------------------------------------------------------------------ */
   /*  Helpers                                                            */
@@ -297,12 +301,38 @@
     return parseFloat(opt && opt.getAttribute("data-fee")) || 0;
   }
 
+  /* Coupon: {code, percent, label} once the server has confirmed it. Only the
+     code is remembered between pages; it is re-checked on every checkout load,
+     so an expired code drops off. The server re-checks it again on submit. */
+  var coupon = null;
+
+  function savedCouponCode() {
+    try { return (JSON.parse(localStorage.getItem(COUPON_KEY)) || {}).code || ""; } catch (e) { return ""; }
+  }
+  function saveCouponCode(code) {
+    try {
+      if (code) localStorage.setItem(COUPON_KEY, JSON.stringify({ code: code }));
+      else localStorage.removeItem(COUPON_KEY);
+    } catch (e) { /* storage blocked — the coupon just won't carry over */ }
+  }
+  function lookupCoupon(code) {
+    return fetch("/coupons/" + encodeURIComponent(code)).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) throw new Error(data.detail || "That code isn't valid.");
+        return data;
+      });
+    });
+  }
+
   function checkoutTotals(cart) {
     var sub = cartSubtotal(cart);
     var freight = freightFee();
     var domestic = freight === 0;
+    // Threshold judged before the discount, same as the server.
     var shipping = !cart.length ? 0 : (domestic ? (sub > FREE_SHIP ? 0 : FLAT_SHIP) : 0);
-    return { sub: sub, shipping: shipping, freight: freight, total: sub + shipping + freight, domestic: domestic };
+    var discount = cart.length && coupon ? Math.round(sub * coupon.percent) / 100 : 0;
+    return { sub: sub, discount: discount, shipping: shipping, freight: freight,
+             total: sub - discount + shipping + freight, domestic: domestic };
   }
 
   function renderCheckout() {
@@ -338,7 +368,66 @@
       (t.domestic ? (t.shipping === 0 ? "FREE" : money(t.shipping)) : "—");
     $("#co-freight").textContent = money(t.freight);
     $("#co-total").textContent = money(t.total);
+    var dRow = $("#co-discount-row");
+    if (dRow) {
+      dRow.hidden = !t.discount;
+      if (coupon) $("#co-discount-label").textContent = coupon.label + " (" + coupon.code + ", " + coupon.percent + "% off)";
+      $("#co-discount").textContent = "−" + money(t.discount);
+    }
   }
+
+  function initCoupon() {
+    var form = $("#coupon-form");
+    if (!form) return;
+    var input = $("#coupon-input"), btn = $("#coupon-apply"), msg = $("#coupon-msg");
+
+    function show(text, bad) {
+      msg.textContent = text;
+      msg.classList.toggle("is-bad", !!bad);
+    }
+    function setApplied(c) {
+      coupon = c;
+      saveCouponCode(c ? c.code : "");
+      input.value = c ? c.code : "";
+      input.readOnly = !!c;
+      btn.textContent = c ? "Remove" : "Apply";
+      renderCheckout();
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (coupon) { setApplied(null); show(""); return; }
+      var code = input.value.trim();
+      if (!code) { show("Enter a coupon code.", true); return; }
+      btn.disabled = true;
+      lookupCoupon(code)
+        .then(function (c) { setApplied(c); show("✓ " + c.label + " — " + c.percent + "% off your items"); })
+        .catch(function (err) { show(err.message, true); })
+        .then(function () { btn.disabled = false; });
+    });
+
+    var saved = savedCouponCode();
+    if (saved) {
+      lookupCoupon(saved)
+        .then(function (c) { setApplied(c); show("✓ " + c.label + " — " + c.percent + "% off your items"); })
+        .catch(function () { saveCouponCode(""); show("Your saved coupon has expired.", true); });
+    }
+  }
+
+  // Homepage billboard: tap the code to copy it; it's also applied at checkout.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-copy-code]");
+    if (!b) return;
+    var code = b.getAttribute("data-copy-code");
+    saveCouponCode(code);
+    var hint = b.querySelector("[data-copy-hint]");
+    var done = function () { if (hint) hint.textContent = "Copied — applied at checkout"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done, done);
+    } else {
+      done();
+    }
+  });
 
   function initCheckout() {
     var form = $("#checkout-form");
@@ -380,6 +469,7 @@
         notes: fd.get("notes") || "",
         website: fd.get("website") || "",
         items: cart,
+        coupon: coupon ? coupon.code : "",
         total: Math.round(t.total * 100) / 100
       };
       var btn = $("#checkout-submit");
@@ -394,8 +484,9 @@
         return r.json();
       }).then(function (data) {
         // Real order value and order number, straight from the request/response.
-        trackPurchase(data.id || ("t" + Date.now()), payload.total);
+        trackPurchase(data.id || ("t" + Date.now()), data.total != null ? data.total : payload.total);
         localStorage.removeItem(CART_KEY);
+        saveCouponCode("");
         renderCartUI([]);
         $("#checkout-layout").hidden = true;
         var success = $("#co-success");
@@ -509,6 +600,7 @@
   initListing();
   initGallery();
   initCheckout();
+  initCoupon();
   initBookingForm("financing-form", "Financing");
   initBookingForm("contact-form", "General");
 })();
