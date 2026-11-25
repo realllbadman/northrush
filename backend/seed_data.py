@@ -1069,7 +1069,7 @@ CATALOG = [
         ],
     },
     # ===================================================================== #
-    #  OPTICS  (6)
+    #  OPTICS  (7)
     # ===================================================================== #
     {
         "slug":           "bushnell-equinox-z2",
@@ -1207,6 +1207,28 @@ CATALOG = [
             "Stadiametric rangefinder",
             "Onboard recording + Wi-Fi",
             "Rugged IP67 housing",
+        ],
+    },
+    {
+        "slug":           "s2-mini-thermal",
+        "name":           "S2 Mini Thermal Imager",
+        "brand":          "",
+        "category":       "optics",
+        "subcategory":    "Spotting Scopes",
+        "model_number":   "Thermal imaging \u00b7 quick-release rail mount \u00b7 compact",
+        "price":          300,
+        "price_max":      None,
+        "original_price": None,
+        "badge":          None,
+        "in_stock":       True,
+        "images":         ["s2-mini-thermal-1.jpg", "s2-mini-thermal-2.jpg"],
+        "description":    "Compact thermal imager that picks up body heat, so game stands out in full darkness, fog and thick cover. Rides on a quick-release rail mount and runs from three simple buttons.",
+        "features": [
+            "Thermal imaging \u2014 sees heat, day or night",
+            "Compact body",
+            "Quick-release rail mount with locking lever",
+            "Top mounting plate",
+            "Three-button controls",
         ],
     },
     # ===================================================================== #
